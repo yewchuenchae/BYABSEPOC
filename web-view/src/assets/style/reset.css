@@ -1,0 +1,56 @@
+/*样式重置*/
+body,ul,li,dl,dt,dd,p,ol,h1,h2,h3,h4,h5,h6,form,img,table,fieldset,legend{margin:0; padding:0;color:#333}
+p,
+h2 {
+    margin: 0;
+    padding: 0;
+}
+ul{
+    margin:0;
+    padding:0;
+    list-style: none;    
+}
+a {
+    text-decoration: none;
+    color:#5F8FDD
+}
+a:hover {
+    text-decoration: none;
+}
+a:link {
+    text-decoration: none;
+}
+a:active {
+    text-decoration: none;
+}
+a:visited {
+    text-decoration: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+fieldset,
+img {
+    border: 0;
+}
+button {
+    outline: none;
+}
+button:hover {
+    cursor: pointer;
+}
+input:focus {
+    outline: 0;
+}
+textarea {
+    resize: none;
+}
+div,p{
+    box-sizing:border-box;
+}
+html,body{
+    height:100%;
+    font-size: 14px;
+    line-height: 20px;
+}
