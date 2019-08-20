@@ -192,7 +192,8 @@ export default {
     }
     .box{
         box-sizing: border-box;
-        padding: 0.1rem 0 1rem;
+        padding-top: 0.1rem 0 0;
+        margin-bottom: 1rem;
         flex: 1;
         overflow-y: auto;
         .item{
