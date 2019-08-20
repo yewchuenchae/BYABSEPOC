@@ -4,7 +4,7 @@ const Tabbar = () => import ('@/components/tabbar') // 底部导航栏
 export default [
     {
         path: '/',
-        redirect: '/guide'
+        redirect: '/guide' 
     },
     {
         path: '/guide',
