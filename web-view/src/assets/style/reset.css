@@ -51,6 +51,6 @@ div,p{
 }
 html,body{
     height:100%;
-    font-size: 14px;
+    /* font-size: 14px; */
     line-height: 20px;
 }

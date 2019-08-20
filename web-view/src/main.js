@@ -8,7 +8,7 @@ import store from './vuex'
 import i18n from './i18n'
 import './mint'
 import 'mint-ui/lib/style.css'
-import '@/assets/js/flexible.js'
+import './assets/js/flexible'
 import '@/global/components.js'
 import '@/global/filter.js'
 console.log(i18n)

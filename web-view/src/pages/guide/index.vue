@@ -4,19 +4,17 @@
             class="box"
             ref="swipe"
             :auto="0"
-            :continuous="false"
-            @before="onBefore"
-            @end="onEnd"
-            @change="onChange">
-            <mt-swipe-item class="item1">
-                1
+            :continuous="false">
+            <mt-swipe-item class="item">
+                <img src="./../../assets/img/guide_1.png" alt="">
+                <p>search</p>
+                <p>goes to e-commerce website to search for component</p>
             </mt-swipe-item>
-            <mt-swipe-item class="item2">
-                2
+            <mt-swipe-item class="item">
+                <img src="./../../assets/img/guide_2.png" alt="">
+                <p>search</p>
+                <p>goes to e-commerce website to search for component</p>
                 <span @click="goHome">立即体验</span>
-                <mt-button type="primary" @click="goHome">立即体验</mt-button>
-                <!-- <mt-button @click.native="goHome">按钮</mt-button> -->
-                <!-- <button @click.native="goHome">立即体验</button> -->
             </mt-swipe-item>
         </mt-swipe>
     </div>
@@ -37,20 +35,6 @@ export default {
         console.log(this.$i18n)
     },
     methods: {
-        onBefore(){
-            console.log('onBefore')
-        },
-        onEnd(){
-            console.log('onEnd')
-        },
-        onChange(idx){
-            console.log('onChange',idx)
-            if(idx == 2){
-                this.$router.replace({
-                    name: 'home'
-                })
-            }
-        },
         goHome(){
             console.log(1111)
             this.$router.replace({
@@ -63,13 +47,13 @@ export default {
 <style lang="scss" scoped>
 #guide-page{
     height: 100%;
-    .box{
-        .item1{
-            background: red;
-        }
-        .item2{
-            background: blue;
-            position: relative;
+    .box .item{
+        overflow: hidden;
+        position: relative;
+        img{
+            width: 6.02rem;
+            height: 5.12rem;
+            margin: 2.9rem auto 0.17rem;
         }
     }
 }
