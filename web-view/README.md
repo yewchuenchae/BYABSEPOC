@@ -3,7 +3,7 @@
 >项目采用了vue-cli(2.9.6)脚手架创建,引用了[mint-ui](http://mint-ui.github.io/#!/zh-cn)组件库，采用了[scss](https://www.sass.hk/)预编译语言，已经配置了组件按需加载!  
 更多操作可参考[http://vuejs-templates.github.io/webpack/](http://vuejs-templates.github.io/webpack/) 与 [https://vue-loader-v14.vuejs.org](https://vue-loader-v14.vuejs.org)
 >>公共路由配置文件: src/router/public-router.js
->>鉴权路由配置文件: src/router/private-router.js
+>>鉴权路由配置文件: src/router/private-router.js  
 >>页面组件: src/pages/*  
 >>组件文件: src/components/*  
 >>全局状态管理: src/store/*  

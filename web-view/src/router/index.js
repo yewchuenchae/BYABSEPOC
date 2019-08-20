@@ -5,13 +5,7 @@ import { getRouters} from './routerFun'
 Vue.use(Router)
 
 const router = new Router({
-  routes: [
-    {
-      path: '/',
-      redirect: '/guide',
-    },
-    ...publicRouter
-  ]
+  routes: []
 })
 // 动态加载路由条件参数 true已加载 false未加载
 let on_off = false;
@@ -20,6 +14,7 @@ let first = true;
 router.beforeEach(async (to, from, next)=> {
   // 加载动态路由
   if(!on_off){
+    await router.addRoutes(publicRouter);
     await getRouters(router,()=>{
       on_off = true;
       next();

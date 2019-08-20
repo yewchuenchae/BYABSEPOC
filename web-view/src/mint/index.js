@@ -1,13 +1,15 @@
 import Vue from 'vue'
 import { 
-    Button, 
-    Search, 
     Swipe, 
-    SwipeItem
+    SwipeItem,
+    TabContainer,
+    TabContainerItem,
+    InfiniteScroll,
 } from 'mint-ui'
 
 
-Vue.component(Button.name, Button);
-Vue.component(Search.name, Search);
 Vue.component(Swipe.name, Swipe);
 Vue.component(SwipeItem.name, SwipeItem);
+Vue.component(TabContainer.name, TabContainer);
+Vue.component(TabContainerItem.name, TabContainerItem);
+Vue.use(InfiniteScroll);
