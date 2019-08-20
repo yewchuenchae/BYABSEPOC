@@ -3,6 +3,10 @@ const Home = () => import('@/pages/home')   // 首页
 const Tabbar = () => import ('@/components/tabbar') // 底部导航栏
 export default [
     {
+        path: '/',
+        redirect: '/guide'
+    },
+    {
         path: '/guide',
         name: 'guide',
         components: {
