@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.schneider.imscore.mapper.SampleUserMapper">
+    <resultMap id="BaseResultMap" type="com.schneider.imscore.po.SampleUserPO">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="password" jdbcType="VARCHAR" property="password"/>
+        <result column="phone" jdbcType="VARCHAR" property="phone"/>
+    </resultMap>
+    <sql id="Table_Name">
+        sample_user
+    </sql>
+    <sql id="Base_Column_List">
+        id, name, password, phone
+    </sql>
+
+    <insert id="save" parameterType="com.schneider.imscore.po.SampleUserPO">
+        insert into
+        <include refid="Table_Name"/>
+        (id, name, password, phone)
+        values (#{id,jdbcType=BIGINT}, #{name,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR},
+        #{phone,jdbcType=VARCHAR})
+    </insert>
+
+
+    <select id="list" parameterType="java.util.Map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from
+        <include refid="Table_Name"/>
+    </select>
+</mapper>
