@@ -5,7 +5,6 @@
       </div>
       <p class="desc-box" @click="goGuide">Relacing a Schneider Electric Relay</p>
       <p class="desc-box drive-box" @click="goGuide">Relacing a Non-Schneider Drive</p>
-
     </div>
 </template>
 
