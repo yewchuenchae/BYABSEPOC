@@ -14,7 +14,7 @@
                 <img src="./../../assets/img/guide_2.png" alt="">
                 <p class="title">search</p>
                 <p class="text">goes to e-commerce website to search for component</p>
-                <div class="goHome"><span @click="goHome">立即体验</span></div>
+                <div class="goHome"><span @click="goHome">Click Enter</span></div>
             </mt-swipe-item>
         </mt-swipe>
     </div>

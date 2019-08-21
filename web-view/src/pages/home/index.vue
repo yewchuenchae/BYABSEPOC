@@ -83,11 +83,27 @@ export default {
                     this.list = [
                         {
                             img: 'http://img1.imgtn.bdimg.com/it/u=3859570704,3506148431&fm=11&gp=0.jpg',
-                            title: '安徽聚氨酯板经销商',
+                            title: 'Google',
                         },
                         {
                             img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
-                            title: '拉萨pvc线槽板电话',
+                            title: 'Apple Inc',
+                        },
+                        {
+                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
+                            title: 'Microsoft',
+                        },
+                        {
+                            img: 'http://img1.imgtn.bdimg.com/it/u=3859570704,3506148431&fm=11&gp=0.jpg',
+                            title: 'Google',
+                        },
+                        {
+                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
+                            title: 'Apple Inc',
+                        },
+                        {
+                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
+                            title: 'Microsoft',
                         },
                     ]
                 }else{
