@@ -1,10 +1,12 @@
 const Guide = () => import('@/pages/guide') // 引导页
 const Home = () => import('@/pages/home')   // 首页
+const Selection = () => import('@/pages/selection') // 选择页
+
 const Tabbar = () => import ('@/components/tabbar') // 底部导航栏
 export default [
     {
         path: '/',
-        redirect: '/guide' 
+        redirect: '/selection' 
     },
     {
         path: '/guide',
@@ -18,7 +20,13 @@ export default [
         name: 'home',
         components: {
             default: Home,
-            tabbar: Tabbar
+        }
+    }, 
+    {
+        path: '/selection',
+        name: 'selection',
+        components: {
+            default: Selection
         }
     }
 ]

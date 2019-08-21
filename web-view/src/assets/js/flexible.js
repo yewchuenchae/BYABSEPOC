@@ -50,4 +50,4 @@
 			doc.body.style.fontSize = "16px";
 		}, false);
 	}
-})(720, 720);
+})(720, 480);

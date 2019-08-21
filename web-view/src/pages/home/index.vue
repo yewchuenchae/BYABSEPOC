@@ -1,8 +1,9 @@
 <template>
     <div id="home-page">
         <div class="search">
-            <img src="./../../assets/img/search_icon.png" alt="">
+            <img class="search-icon" src="./../../assets/img/search_icon.png" alt="">
             <p>Enter part number/keywords</p>
+            <img class="search-camera" src="./../../assets/img/search_camera.png" alt="">
         </div>
         <div class="tab">
             <span :class="active == 0 ? 'active' : ''" @click="changeActive(0)">All Products</span>
@@ -12,7 +13,7 @@
             class="box"
             v-infinite-scroll="loadMore"
             infinite-scroll-disabled="loading"
-            infinite-scroll-distance="100">
+            infinite-scroll-distance="10">
             <div 
                 class="item"
                 v-for="(item, idx) in list"
@@ -146,7 +147,6 @@ export default {
          * @method 监听滚动到底部
         */
         loadMore(){
-            console.log('到底了');
             if(!this.loading){
                 this.loading = true;
                 Indicator.open();
@@ -176,15 +176,20 @@ export default {
         overflow: hidden;
         border-radius: 0.4rem;
         background:rgba(247,247,247,1);
-        img{
+        .search-icon{
             width: 0.3rem;
             height: 0.3rem;
             margin-right: 0.2rem;
         }
         p{
+            flex:1;
             font-size: 0.26rem;
             color:#999;
             line-height: 0.37rem;
+        }
+        .search-camera{
+            height: 0.34rem;
+            height: 0.3rem;
         }
     }
     .tab{
@@ -209,7 +214,6 @@ export default {
     .box{
         box-sizing: border-box;
         padding-top: 0.1rem 0 0;
-        margin-bottom: 1rem;
         flex: 1;
         overflow-y: auto;
         .item{

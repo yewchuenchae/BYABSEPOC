@@ -1,8 +1,6 @@
 <template>
   <div id="app">
-    <keep-alive>
       <router-view></router-view>
-    </keep-alive>
     <router-view name="tabbar"></router-view>
   </div>
 </template>
@@ -17,5 +15,6 @@ export default {
 @import './assets/style/reset.css';
 #app {
   height:100%;
+  margin: 0 auto;
 }
 </style>

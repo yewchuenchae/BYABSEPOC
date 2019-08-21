@@ -54,3 +54,12 @@ html,body{
     /* font-size: 14px; */
     line-height: 20px;
 }
+html{
+    background: #E9ECF0;
+}
+body{
+    max-width: 480px;
+    margin: 0 auto;
+    background: #FFF;
+}
+
