@@ -25,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 
@@ -54,15 +55,49 @@ public class ProductManager {
     private String instanceName;
 
 
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException {
+    /**
+     * 图片搜索
+     * @param multipartFile
+     * @return
+     * @throws BizException
+     * @throws ClientException
+     */
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException,ClientException {
+        List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片审核
 //        checkImage(multipartFile);
 
         // 2.图片搜索
+        // 接口开始时间
+        long start = System.currentTimeMillis();
         SearchImageResponse response = imageSearch(multipartFile);
+        long end = System.currentTimeMillis();
+        log.info("image search sdk执行时间：{}ms",end-start);
 
+        if (response != null){
+            List<SearchImageResponse.Auction> auctions = response.getAuctions();
+            if (!CollectionUtils.isEmpty(auctions)){
+                for (SearchImageResponse.Auction auction:auctions) {
+                    ProductVO productVO = new ProductVO();
+                    productVO.setProductId(auction.getProductId());
+//                    String customContent = auction.getCustomContent();
+                    // todo mock 数据
+                    String customContent = "{\"brand\":\"Schneider Electric\",\"category\":\"Variable Speed Drive\",\"description\":\"Schneider Electric Altivar 320 Variable Speed Drive 1-Phase, 200-240 V AC, 0.18 kW, 0.25 hp, 1.5 A, Compact\",\"family\":\"Altivar 320\"}";
+                   // customContent 为json字符串
+                    ProductVO productVO1 = JSON.parseObject(customContent, ProductVO.class);
+                    if (productVO1 != null){
+                        productVO.setBrand(productVO1.getBrand());
+                        productVO.setCategory(productVO1.getCategory());
+                        productVO.setDescription(productVO1.getDescription());
+                        productVO.setFamily(productVO1.getFamily());
+                    }
+
+                    productVOS.add(productVO);
+                }
+            }
+        }
         // 3.获取产品列表
-        return new ArrayList<>();
+        return productVOS;
     }
 
     /**
@@ -71,7 +106,7 @@ public class ProductManager {
      * @return
      * @throws Exception
      */
-    private SearchImageResponse imageSearch(MultipartFile multipartFile){
+    private SearchImageResponse imageSearch(MultipartFile multipartFile) throws ClientException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
         IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         IAcsClient client = new DefaultAcsClient(profile);
@@ -98,20 +133,16 @@ public class ProductManager {
         request.setStart(0);
 
         SearchImageResponse response = null;
-        try {
-             response = client.getAcsResponse(request);
-        } catch (ClientException e) {
-            log.error("调用阿里云图像搜索sdk失败",e);
-        }
+        response = client.getAcsResponse(request);
         return response;
     }
 
     /**
-     * 图片审核
+     * 图片审核ocr
      * @param multipartFile
      * @throws Exception
      */
-    private void checkImage(MultipartFile multipartFile) throws BizException{
+    private void checkImage(MultipartFile multipartFile) throws BizException,ClientException{
         IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         DefaultProfile.addEndpoint(region, "Green", endpoint);
         IAcsClient client = new DefaultAcsClient(profiles);
@@ -175,11 +206,8 @@ public class ProductManager {
         imageSyncScanRequest.setConnectTimeout(3000);
         imageSyncScanRequest.setReadTimeout(10000);
         HttpResponse httpResponse = null;
-        try {
-            httpResponse = client.doAction(imageSyncScanRequest);
-        } catch (Exception e) {
-            log.error("调用图片检测接口失败,入参{}",JSON.toJSONString(imageSyncScanRequest),e);
-        }
+
+        httpResponse = client.doAction(imageSyncScanRequest);
 
         //服务端接收到请求，并完成处理返回的结果
         if (httpResponse != null && httpResponse.isSuccess()) {

@@ -1,5 +1,6 @@
 package com.schneider.imscore.biz.service.product;
 
+import com.aliyuncs.exceptions.ClientException;
 import com.schneider.imscore.biz.manager.product.ProductManager;
 import com.schneider.imscore.resp.Result;
 import com.schneider.imscore.resp.ResultCode;
@@ -36,10 +37,13 @@ public class ProductService {
             }
             productVOS = productManager.listProductsBySearch(multipartFile);
         } catch (BizException e){
-            log.error("产品列表查询失败",e);
+            log.error("图像搜索查询失败",e);
             return new Result(e.getCode(), e.getMessage());
+        } catch (ClientException e){
+            log.error("阿里云接口调用失败",e);
+            return new Result(e.getErrCode(), e.getMessage());
         } catch (Exception e) {
-            log.error("产品列表查询失败",e);
+            log.error("图像搜索查询失败",e);
             return new Result<>(ResultCode.FAILED.getCode(),ResultCode.FAILED.getDesc());
         }
         return Result.buildSuccess(productVOS);
