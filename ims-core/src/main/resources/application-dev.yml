@@ -25,3 +25,11 @@ spring:
 #    min-idle: 1 # 连接池最小空闲连接
 #    max-wait: 1000 # 最大建立连接等待时间。如果超过此时间将接到异常。设为-1表示无限制
 #    min-mvictable-idle-time-millis: 300000 # 连接的最小空闲时间 默认1800000毫秒(30分钟)
+
+aliyun:
+  image:
+    endpoint: imagesearch.ap-southeast-1.aliyuncs.com
+    region: ap-southeast-1
+    accessKeyId: LTAIFmaxnrb5uGYd
+    accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ
+    instanceName: scimgsg1
