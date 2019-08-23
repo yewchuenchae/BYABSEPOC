@@ -74,15 +74,14 @@ public class ProductManager {
         long end = System.currentTimeMillis();
         log.info("image search sdk执行时间：{}ms",end-start);
 
+        // 3.返回搜索结果列表
         if (response != null){
             List<SearchImageResponse.Auction> auctions = response.getAuctions();
             if (!CollectionUtils.isEmpty(auctions)){
                 for (SearchImageResponse.Auction auction:auctions) {
                     ProductVO productVO = new ProductVO();
                     productVO.setProductId(auction.getProductId());
-//                    String customContent = auction.getCustomContent();
-                    // todo mock 数据
-                    String customContent = "{\"brand\":\"Schneider Electric\",\"category\":\"Variable Speed Drive\",\"description\":\"Schneider Electric Altivar 320 Variable Speed Drive 1-Phase, 200-240 V AC, 0.18 kW, 0.25 hp, 1.5 A, Compact\",\"family\":\"Altivar 320\"}";
+                    String customContent = auction.getCustomContent();
                    // customContent 为json字符串
                     ProductVO productVO1 = JSON.parseObject(customContent, ProductVO.class);
                     if (productVO1 != null){
@@ -96,7 +95,6 @@ public class ProductManager {
                 }
             }
         }
-        // 3.获取产品列表
         return productVOS;
     }
 
