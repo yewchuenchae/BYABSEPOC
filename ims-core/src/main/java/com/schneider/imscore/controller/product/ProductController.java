@@ -2,6 +2,7 @@ package com.schneider.imscore.controller.product;
 
 import com.schneider.imscore.biz.service.product.ProductService;
 import com.schneider.imscore.resp.Result;
+import com.schneider.imscore.vo.product.req.ProductReqData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,5 +29,12 @@ public class ProductController {
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
         return productService.listProductsBySearch(file);
+    }
+
+    @PostMapping("/product/search/add")
+    public Result addImageSearch(HttpServletRequest request, ProductReqData productReqData){
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        MultipartFile file = multipartRequest.getFile("file");
+        return productService.saveImageSearch(productReqData,file);
     }
 }
