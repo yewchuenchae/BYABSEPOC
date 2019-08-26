@@ -77,12 +77,12 @@ public class ProductManager {
      * @throws BizException
      * @throws ClientException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException,ClientException {
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
         List<String> text = imageOcr(multipartFile);
 
-//        // 2.图片搜索
+        // 2.图片搜索
         SearchImageResponse response = imageSearch(multipartFile);
 
         if (response != null){
@@ -162,7 +162,7 @@ public class ProductManager {
      * @return
      * @throws Exception
      */
-    private SearchImageResponse imageSearch(MultipartFile multipartFile) throws ClientException{
+    private SearchImageResponse imageSearch(MultipartFile multipartFile) throws BizException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
         IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         IAcsClient client = new DefaultAcsClient(profile);
@@ -177,7 +177,6 @@ public class ProductManager {
         String encodePicContent = FileUtil.multipartFileToBase64(multipartFile);
         request.setPicContent(encodePicContent);
         // 选填，商品类目。
-        // 2. 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
         request.setCategoryId(88888888);
         // 主体识别
         request.setCrop(true);
@@ -186,7 +185,12 @@ public class ProductManager {
         request.setNum(20);
 
         SearchImageResponse response = null;
-        response = client.getAcsResponse(request);
+        try {
+            response = client.getAcsResponse(request);
+        } catch (ClientException e) {
+            log.error("阿里云图像搜索接口调用失败,入参SearchImageRequest{}",JSON.toJSONString(request),e);
+           throw new BizException(ResultCode.IMAGE_SEARCH_ERROR);
+        }
         return response;
     }
 
@@ -195,35 +199,23 @@ public class ProductManager {
      * @param multipartFile
      * @throws Exception
      */
-    private List<String> imageOcr(MultipartFile multipartFile) throws BizException,ClientException{
+    private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
+        // ocr 返回结果集合
         List<String> ocrResults = new ArrayList<>();
         IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         DefaultProfile.addEndpoint(region, "Green", greenEndpoint);
         IAcsClient client = new DefaultAcsClient(profiles);
 
         ImageSyncScanRequest imageSyncScanRequest = new ImageSyncScanRequest();
-        // 指定api返回格式
         imageSyncScanRequest.setAcceptFormat(FormatType.JSON);
-        // 指定请求方法
         imageSyncScanRequest.setMethod(MethodType.POST);
         imageSyncScanRequest.setEncoding("utf-8");
-        //支持http和https
         imageSyncScanRequest.setProtocol(ProtocolType.HTTP);
 
-
         JSONObject httpBody = new JSONObject();
-        /**
-         * 设置待检测图片， 一张图片一个task，最多支持100张图片同时检测，即需要构建100个task
-         * 多张图片同时检测时，处理的时间由最后一个处理完的图片决定。因此通常情况下批量检测的平均rt比单张检测的要长, 一次批量提交的图片数越多，rt被拉长的概率越高
-         * 这里以单张图片检测作为示例, 如果是批量图片检测，请自行构建多个task
-         * 本地图片相对于互联网图片链接来说，多了一个上传步骤，上传后取返回的链接进行检测
-         */
+        // ocr
         httpBody.put("scenes", Arrays.asList("ocr"));
 
-        /**
-         * 如果您要检测的文件存于本地服务器上，可以通过下述代码片生成url，
-         * 再将返回的url作为图片地址传递到服务端进行检测
-         */
         String url = null;
         try {
             OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
@@ -232,16 +224,9 @@ public class ProductManager {
             String key = MessageFormat.format("ocr/{0}{1}", dateStr + "/", multipartFile.getOriginalFilename());
             url = aliyunOSSClientUtil.uploadFile(ossClient, multipartFile.getInputStream(), key);
         } catch (IOException e) {
-
+            throw new  BizException(ResultCode.OSS_UPLOAD_ERROR);
         }
 
-
-        /**
-         * 设置待检测图片， 一张图片一个task，
-         * 多张图片同时检测时，处理的时间由最后一个处理完的图片决定。
-         * 通常情况下批量检测的平均rt比单张检测的要长, 一次批量提交的图片数越多，rt被拉长的概率越高
-         * 这里以单张图片检测作为示例, 如果是批量图片检测，请自行构建多个task
-         */
         JSONObject task = new JSONObject();
         task.put("dataId", UUID.randomUUID().toString());
 
@@ -252,7 +237,6 @@ public class ProductManager {
 
         imageSyncScanRequest.setHttpContent(org.apache.commons.codec.binary.StringUtils.getBytesUtf8(httpBody.toJSONString()), "UTF-8", FormatType.JSON);
 
-
         /**
          * 请设置超时时间, 服务端全链路处理超时时间为10秒，请做相应设置
          * 如果您设置的ReadTimeout 小于服务端处理的时间，程序中会获得一个read timeout 异常
@@ -261,12 +245,16 @@ public class ProductManager {
         imageSyncScanRequest.setReadTimeout(10000);
         HttpResponse httpResponse = null;
 
-        httpResponse = client.doAction(imageSyncScanRequest);
+        try {
+            httpResponse = client.doAction(imageSyncScanRequest);
+        } catch (ClientException e) {
+            log.error("阿里云ocr调用失败 入参imageSyncScanRequest：{}",JSON.toJSONString(imageSyncScanRequest),e);
+            throw new BizException(ResultCode.OCR_ERROR);
+        }
 
         //服务端接收到请求，并完成处理返回的结果
         if (httpResponse != null && httpResponse.isSuccess()) {
             JSONObject scrResponse = JSON.parseObject(org.apache.commons.codec.binary.StringUtils.newStringUtf8(httpResponse.getHttpContent()));
-            System.out.println(JSON.toJSONString(scrResponse,true));
             int requestCode = scrResponse.getIntValue("code");
             //每一张图片的检测结果
             JSONArray taskResults = scrResponse.getJSONArray("data");
@@ -293,7 +281,7 @@ public class ProductManager {
                         }
                     } else {
                         //单张图片处理失败, 原因是具体的情况详细分析
-                        log.info("检测图片单张图片处理失败 task response:{}",JSON.toJSONString(taskResult));
+                        log.error("ocr检测图片单张图片处理失败 task response:{}",JSON.toJSONString(taskResult));
                         throw new BizException(ResultCode.SINGLE_IMAGE_CHECK_ERROR);
                     }
                 }
@@ -301,9 +289,12 @@ public class ProductManager {
                 /**
                  * 表明请求整体处理失败，原因视具体的情况详细分析
                  */
-                log.error("the whole image scan request failed. response:{}",JSON.toJSONString(scrResponse));
+                log.error("ocr:the whole image scan request failed. response:{}",JSON.toJSONString(scrResponse));
                 throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
             }
+        }else {
+            log.error("ocr:the whole image scan request failed. httpResponse:{}",JSON.toJSONString(httpResponse));
+            throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
         }
         return ocrResults;
     }
@@ -315,7 +306,7 @@ public class ProductManager {
      * @return
      * @throws ClientException
      */
-    public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile) throws ClientException{
+    public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile)throws BizException {
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
         IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         IAcsClient client = new DefaultAcsClient(profile);
@@ -335,14 +326,19 @@ public class ProductManager {
         String encodePicContent = FileUtil.multipartFileToBase64(multipartFile);
         request.setPicContent(encodePicContent);
         // 必填，图片内容，Base64编码。
-        // 最多支持 2MB大小图片以及5s的传输等待时间。当前仅支持jpg和png格式图片；图片
-        // 长和宽的像素必须都大于等于200，并且小于等于1024；图像中不能带有旋转信息。
         request.setPicContent(encodePicContent);
 
         // 选填，用户自定义的内容，最多支持 4096个字符。
-        // 查询时会返回该字段。例如可添加图片的描述等文本。
         request.setCustomContent(productReqData.getCustomContent());
-        return  client.getAcsResponse(request);
+        AddImageResponse acsResponse = null;
+        try {
+            acsResponse = client.getAcsResponse(request);
+        } catch (ClientException e) {
+            log.error("调用阿里云新增图搜图片api失败,入参productReqData:{}",JSON.toJSONString(request),e);
+            throw new BizException(ResultCode.IMAGE_SEARCH_ADD_ERROR);
+        }
+
+        return  acsResponse;
     }
 
 }
