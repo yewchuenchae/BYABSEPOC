@@ -4,6 +4,7 @@
 package com.schneider.imscore.resp.exception;
 
 import com.schneider.imscore.resp.ResultCode;
+import lombok.Getter;
 
 import java.io.Serializable;
 
@@ -12,9 +13,11 @@ import java.io.Serializable;
  * @version $Id: BizException.java, v 0.1 2019/3/13 16:43 by Exp $$
  * @Description 异常处理类
  */
-public class BizException extends Exception implements Serializable {
+@Getter
+public class BizException extends RuntimeException implements Serializable {
 
-    private static final long serialVersionUID = -1702241321770576449L;
+
+    private static final long serialVersionUID = -2616066043454767034L;
     private String code;
     private String message;
 
@@ -22,6 +25,7 @@ public class BizException extends Exception implements Serializable {
         this.code = code;
         this.message = message;
     }
+
     public BizException(ResultCode resultCode) {
         this.code = resultCode.getCode();
         this.message = resultCode.getDesc();
@@ -29,8 +33,5 @@ public class BizException extends Exception implements Serializable {
     public String getCode() {
         return this.code;
     }
-    @Override
-    public String getMessage() {
-        return this.message;
-    }
+
 }

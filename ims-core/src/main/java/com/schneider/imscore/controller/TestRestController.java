@@ -6,6 +6,8 @@ package com.schneider.imscore.controller;
 import com.schneider.imscore.biz.manager.SampleUserManager;
 import com.schneider.imscore.biz.service.SampleUserService;
 import com.schneider.imscore.resp.Result;
+import com.schneider.imscore.resp.ResultCode;
+import com.schneider.imscore.resp.exception.BizException;
 import com.schneider.imscore.vo.SampleUserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,5 +36,10 @@ public class TestRestController {
         return sampleUserService.list();
     }
 
+
+    @GetMapping("/test")
+    public Result<List<SampleUserVO>> error(){
+        throw new BizException(ResultCode.FAILED);
+    }
 
 }
