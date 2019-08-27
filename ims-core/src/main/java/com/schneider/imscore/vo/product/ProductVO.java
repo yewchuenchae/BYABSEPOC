@@ -24,4 +24,15 @@ public class ProductVO implements Serializable {
     private String category;
     /**说明*/
     private String description;
+
+    @Override
+    public boolean equals(Object obj) {
+        ProductVO u = (ProductVO) obj;
+        return this.productId.equals(u.getProductId());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.productId.hashCode();
+    }
 }

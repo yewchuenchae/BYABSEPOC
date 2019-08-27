@@ -18,10 +18,11 @@ import com.aliyuncs.imagesearch.model.v20190325.SearchImageRequest;
 import com.aliyuncs.imagesearch.model.v20190325.SearchImageResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.schneider.imscore.mapper.product.ProductSkuMapper;
+import com.schneider.imscore.po.product.ProductSkuPO;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
 import com.schneider.imscore.util.AliyunOSSClientUtil;
-import com.schneider.imscore.util.BeanConvertUtils;
 import com.schneider.imscore.util.DateUtils;
 import com.schneider.imscore.util.FileUtil;
 import com.schneider.imscore.vo.product.ProductVO;
@@ -31,10 +32,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
 
@@ -69,6 +72,9 @@ public class ProductManager {
     @Autowired
     private AliyunOSSClientUtil aliyunOSSClientUtil;
 
+    @Autowired
+    private ProductSkuMapper productSkuMapper;
+
 
     /**
      * 图片搜索
@@ -81,58 +87,45 @@ public class ProductManager {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
         List<String> text = imageOcr(multipartFile);
+        ProductSkuPO productOcrPO = null;
 
         // 2.图片搜索
         SearchImageResponse response = imageSearch(multipartFile);
-
         if (response != null){
-            // 直接返回结果集
-            if (CollectionUtils.isEmpty(text)){
-                productVOS = productVOList(response.getAuctions(), productVOS);
-            }else {
-                    List<SearchImageResponse.Auction> auctionsList = response.getAuctions();
-                    if (!CollectionUtils.isEmpty(auctionsList)){
-                        // ocr结果过滤
-                        List<SearchImageResponse.Auction> filter = new ArrayList<>();
-                        List<SearchImageResponse.Auction> filterResult = filterAction(filter, text);
-                        // ocr结果查到的过滤后没有结果
-                        if (filterResult.size() == 0 ){
-                            // 1.text作为sku查询数据库 有记录唯一范围
-
-                            // 2 数据库查不到则返回结果集
-                            productVOS = productVOList(response.getAuctions(), productVOS);
-
-                            // 超过5条
-                        } else if (filterResult.size() > IMAGE_SEARCH_RESULT_LIMIT){
-                             productVOS = productVOList(filterResult, productVOS);
-                        }else {
-                            productVOS = BeanConvertUtils.convertList(auctionsList, ProductVO.class);
+            List<SearchImageResponse.Auction> auctions = response.getAuctions();
+            if (!CollectionUtils.isEmpty(auctions)){
+                if (!CollectionUtils.isEmpty(text)){
+                    // ocr的结果去数据库查询 查到：合并   查不到：返回图搜
+                    for (String str: text) {
+                        ProductSkuPO productSkuPO = productSkuMapper.selectProductByReference(str);
+                        if (productSkuPO != null){
+                            productOcrPO = productSkuPO;
+                            break;
                         }
                     }
+                    // ocr 结果未查到
+                    if (productOcrPO == null){
+                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                    }else {
+                        // ocr结果查到了
+                        productVOS = productVOList(auctions, productVOS,4);
+                        ProductVO productVO = new ProductVO();
+                        productVO.setBrand(productOcrPO.getBrand());
+                        productVO.setFamily(productOcrPO.getFamily());
+                        productVO.setDescription(productOcrPO.getDescription());
+                        productVO.setCategory(productOcrPO.getCategory());
+                        productVO.setProductId("SSM1A16BDR");
+                        productVOS.add(productVO);
+                        productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
+                    }
+                }else {
+                    productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                }
             }
         }
         // 3.返回搜索结果列表
         return productVOS;
     }
-
-    /**
-     * 返回ocr过滤后的结果
-     * @param auctionsList
-     * @param text
-     * @return
-     */
-    private List<SearchImageResponse.Auction> filterAction(List<SearchImageResponse.Auction> auctionsList,List<String> text){
-        for (SearchImageResponse.Auction auction : auctionsList) {
-            for (String str: text) {
-                if (auction.getCustomContent().contains(str)){
-                    auctionsList.add(auction);
-                    break;
-                }
-            }
-        }
-        return auctionsList;
-    }
-
 
 
     /**
@@ -141,14 +134,38 @@ public class ProductManager {
      * @param productVOS
      * @return
      */
-    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS){
-        if (!CollectionUtils.isEmpty(auctionsList)){
+    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit){
             List<SearchImageResponse.Auction> auctions = new ArrayList<>();
-            if (auctionsList.size() > IMAGE_SEARCH_RESULT_LIMIT){
-                auctions = auctionsList.subList(0, IMAGE_SEARCH_RESULT_LIMIT);
-                productVOS = BeanConvertUtils.convertList(auctions, ProductVO.class);
+            if (auctionsList.size() > limit){
+                auctions = auctionsList.subList(0, limit);
+                productVOS = convert(auctions);
             }else {
-                productVOS = BeanConvertUtils.convertList(auctionsList, ProductVO.class);
+                productVOS = convert(auctionsList);
+            }
+        return productVOS;
+    }
+
+    /**
+     * 转换
+     * @param auctions
+     * @return
+     */
+    private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions){
+        List<ProductVO> productVOS = new ArrayList<>();
+        for (SearchImageResponse.Auction auction: auctions) {
+            ProductVO productVO = new ProductVO();
+            productVO.setProductId(auction.getProductId());
+            String customContent = auction.getCustomContent();
+            if (!StringUtils.isEmpty(customContent)){
+                // customContent 为json字符串
+                ProductVO productVO1 = JSON.parseObject(customContent, ProductVO.class);
+                if (productVO1 != null){
+                    productVO.setBrand(productVO1.getBrand());
+                    productVO.setCategory(productVO1.getCategory());
+                    productVO.setDescription(productVO1.getDescription());
+                    productVO.setFamily(productVO1.getFamily());
+                    productVOS.add(productVO);
+                }
             }
         }
         return productVOS;
@@ -189,23 +206,16 @@ public class ProductManager {
             response = client.getAcsResponse(request);
         } catch (ClientException e) {
             log.error("阿里云图像搜索接口调用失败,入参SearchImageRequest{}",JSON.toJSONString(request),e);
-           throw new BizException(ResultCode.IMAGE_SEARCH_ERROR);
+           throw new BizException(ResultCode.IMAGE_SEARCH_ERROR.getCode(),e.getErrCode());
         }
         return response;
     }
 
     /**
-     * 图片ocr
-     * @param multipartFile
-     * @throws Exception
+     * ocr 参数初始化
+     * @return
      */
-    private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
-        // ocr 返回结果集合
-        List<String> ocrResults = new ArrayList<>();
-        IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
-        DefaultProfile.addEndpoint(region, "Green", greenEndpoint);
-        IAcsClient client = new DefaultAcsClient(profiles);
-
+    private  ImageSyncScanRequest imageOcrInit(MultipartFile multipartFile) throws BizException{
         ImageSyncScanRequest imageSyncScanRequest = new ImageSyncScanRequest();
         imageSyncScanRequest.setAcceptFormat(FormatType.JSON);
         imageSyncScanRequest.setMethod(MethodType.POST);
@@ -243,6 +253,26 @@ public class ProductManager {
          */
         imageSyncScanRequest.setConnectTimeout(3000);
         imageSyncScanRequest.setReadTimeout(10000);
+        return imageSyncScanRequest;
+    }
+
+
+    /**
+     * 图片ocr
+     * @param multipartFile
+     * @throws Exception
+     */
+    private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
+        IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
+        DefaultProfile.addEndpoint(region, "Green", greenEndpoint);
+        IAcsClient client = new DefaultAcsClient(profiles);
+
+        // 参数初始化
+        ImageSyncScanRequest imageSyncScanRequest = imageOcrInit(multipartFile);
+
+        // ocr 返回结果集合
+        List<String> ocrResults = new ArrayList<>();
+
         HttpResponse httpResponse = null;
 
         try {
@@ -335,7 +365,7 @@ public class ProductManager {
             acsResponse = client.getAcsResponse(request);
         } catch (ClientException e) {
             log.error("调用阿里云新增图搜图片api失败,入参productReqData:{}",JSON.toJSONString(request),e);
-            throw new BizException(ResultCode.IMAGE_SEARCH_ADD_ERROR);
+            throw new BizException(ResultCode.IMAGE_SEARCH_ADD_ERROR.getCode(),e.getErrCode());
         }
 
         return  acsResponse;
