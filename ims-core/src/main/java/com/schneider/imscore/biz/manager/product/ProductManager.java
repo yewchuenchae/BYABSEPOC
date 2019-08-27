@@ -114,7 +114,7 @@ public class ProductManager {
                         productVO.setFamily(productOcrPO.getFamily());
                         productVO.setDescription(productOcrPO.getDescription());
                         productVO.setCategory(productOcrPO.getCategory());
-                        productVO.setProductId("SSM1A16BDR");
+                        productVO.setProductId(productOcrPO.getReference());
                         productVOS.add(productVO);
                         productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
                     }
