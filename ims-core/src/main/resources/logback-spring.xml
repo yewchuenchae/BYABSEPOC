@@ -88,9 +88,6 @@
     </springProfile>
 
     <springProfile name="tst">
-        <logger name="com.schneider.imscore" level="info" additivity="false">
-            <appender-ref ref="STDOUT"/>
-        </logger>
         <!-- sql输出是debug级别 -->
         <logger name="com.schneider.imscore.mapper" level="debug" additivity="false">
             <appender-ref ref="SQL_APPENDER"/>
@@ -102,7 +99,7 @@
     </springProfile>
 
     <!-- 生产环境下，将此级别配置为适合的级别，以免日志文件太多或影响程序性能 -->
-    <springProfile name="prod">
+    <springProfile name="prd">
         <root level="info">
             <appender-ref ref="STDOUT"/>
             <appender-ref ref="FILE_APPENDER"/>
