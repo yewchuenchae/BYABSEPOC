@@ -6,6 +6,7 @@ import com.schneider.imscore.biz.manager.product.ProductManager;
 import com.schneider.imscore.resp.Result;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
+import com.schneider.imscore.util.ImageSizeUtil;
 import com.schneider.imscore.vo.product.ProductVO;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,11 @@ public class ProductService {
             if (multipartFile == null){
                 return new Result(ResultCode.ILLEGAL_PARAM.getCode(),ResultCode.ILLEGAL_PARAM.getDesc());
             }
-            productVOS = productManager.listProductsBySearch(multipartFile);
+            // 图片压缩
+            MultipartFile[] multipartFiles = new MultipartFile[1];
+            multipartFiles[0] = multipartFile;
+            MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
+            productVOS = productManager.listProductsBySearch(result[0]);
         } catch (BizException e){
             return new Result(e.getCode(), e.getMessage());
         }  catch (Exception e) {
