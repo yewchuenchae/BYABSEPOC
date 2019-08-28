@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.schneider.imscore.mapper.product.ImageSearchAddMapper">
+  <resultMap id="BaseResultMap" type="com.schneider.imscore.po.product.ImageSearchAddPO">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="request_id" jdbcType="VARCHAR" property="requestId" />
+    <result column="image_name" jdbcType="VARCHAR" property="imageName" />
+    <result column="custom_content" jdbcType="VARCHAR" property="customContent" />
+    <result column="product_id" jdbcType="VARCHAR" property="productId" />
+    <result column="result" jdbcType="VARCHAR" property="result" />
+    <result column="category_id" jdbcType="VARCHAR" property="categoryId" />
+    <result column="instance_name" jdbcType="VARCHAR" property="instanceName" />
+    <result column="creator" jdbcType="VARCHAR" property="creator" />
+    <result column="modifier" jdbcType="VARCHAR" property="modifier" />
+    <result column="created" jdbcType="TIMESTAMP" property="created" />
+    <result column="modified" jdbcType="TIMESTAMP" property="modified" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, request_id, image_name, custom_content, product_id, result, category_id, instance_name, 
+    creator, modifier, created, modified
+  </sql>
+
+  <insert id="saveImageSearch" parameterType="com.schneider.imscore.po.product.ImageSearchAddPO">
+    insert into tb_image_search_add
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="requestId != null">
+        request_id,
+      </if>
+      <if test="imageName != null">
+        image_name,
+      </if>
+      <if test="customContent != null">
+        custom_content,
+      </if>
+      <if test="productId != null">
+        product_id,
+      </if>
+      <if test="result != null">
+        result,
+      </if>
+      <if test="categoryId != null">
+        category_id,
+      </if>
+      <if test="instanceName != null">
+        instance_name,
+      </if>
+      <if test="creator != null">
+        creator,
+      </if>
+      <if test="modifier != null">
+        modifier,
+      </if>
+      <if test="created != null">
+        created,
+      </if>
+      <if test="modified != null">
+        modified,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="requestId != null">
+        #{requestId,jdbcType=VARCHAR},
+      </if>
+      <if test="imageName != null">
+        #{imageName,jdbcType=VARCHAR},
+      </if>
+      <if test="customContent != null">
+        #{customContent,jdbcType=VARCHAR},
+      </if>
+      <if test="productId != null">
+        #{productId,jdbcType=VARCHAR},
+      </if>
+      <if test="result != null">
+        #{result,jdbcType=VARCHAR},
+      </if>
+      <if test="categoryId != null">
+        #{categoryId,jdbcType=VARCHAR},
+      </if>
+      <if test="instanceName != null">
+        #{instanceName,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null">
+        #{creator,jdbcType=VARCHAR},
+      </if>
+      <if test="modifier != null">
+        #{modifier,jdbcType=VARCHAR},
+      </if>
+      <if test="created != null">
+        #{created,jdbcType=TIMESTAMP},
+      </if>
+      <if test="modified != null">
+        #{modified,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+
+</mapper>

@@ -16,6 +16,12 @@ public class ProductReqData implements Serializable {
 
     /**sku*/
     private String productId;
-    /**说明等*/
-    private String customContent;
+    /**品牌*/
+    private String brand;
+    /**种族*/
+    private String family;
+    /**类别*/
+    private String category;
+    /**说明*/
+    private String description;
 }

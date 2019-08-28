@@ -24,11 +24,11 @@ public enum ResultCode {
     // OSS上传失败
     OSS_UPLOAD_ERROR("403","OSS upload error"),
     // 图像搜索api调用失败
-    IMAGE_SEARCH_ERROR("404","image search api error"),
+    IMAGE_SEARCH_ERROR("600","image search api error"),
     // ocr api调用失败
-    OCR_ERROR("404","ocr api error"),
+    OCR_ERROR("700","ocr api error"),
     // 新增图像搜索api调用失败
-    IMAGE_SEARCH_ADD_ERROR("404","add image search  api error"),
+    IMAGE_SEARCH_ADD_ERROR("800","add image search  api error"),
     ;
 
 

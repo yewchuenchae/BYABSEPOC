@@ -18,7 +18,9 @@ import com.aliyuncs.imagesearch.model.v20190325.SearchImageRequest;
 import com.aliyuncs.imagesearch.model.v20190325.SearchImageResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
+import com.schneider.imscore.po.product.ImageSearchAddPO;
 import com.schneider.imscore.po.product.ProductSkuPO;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
@@ -31,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -74,6 +77,9 @@ public class ProductManager {
 
     @Autowired
     private ProductSkuMapper productSkuMapper;
+
+    @Autowired
+    private ImageSearchAddMapper imageSearchAddMapper;
 
 
     /**
@@ -336,6 +342,7 @@ public class ProductManager {
      * @return
      * @throws ClientException
      */
+    @Transactional(rollbackFor = {Exception.class, BizException.class})
     public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile)throws BizException {
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
         IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
@@ -349,7 +356,6 @@ public class ProductManager {
 
         // 2. 如果多次添加图片具有相同的ProductId + PicName，以最后一次添加为准，前面添加的的图片将被覆盖。
         request.setPicName(multipartFile.getOriginalFilename());
-        // 选填，图片类目。
         // 2. 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
         request.setCategoryId(88888888);
         // 图片的base64编码
@@ -359,7 +365,14 @@ public class ProductManager {
         request.setPicContent(encodePicContent);
 
         // 选填，用户自定义的内容，最多支持 4096个字符。
-        request.setCustomContent(productReqData.getCustomContent());
+
+        ProductSkuPO productSkuPO = new ProductSkuPO();
+        productSkuPO.setBrand(productReqData.getBrand());
+        productSkuPO.setDescription(productReqData.getDescription());
+        productSkuPO.setCategory(productReqData.getCategory());
+        productSkuPO.setFamily(productReqData.getFamily());
+
+        request.setCustomContent(JSON.toJSONString(productSkuPO));
         AddImageResponse acsResponse = null;
         try {
             acsResponse = client.getAcsResponse(request);
@@ -368,7 +381,20 @@ public class ProductManager {
             throw new BizException(ResultCode.IMAGE_SEARCH_ADD_ERROR.getCode(),e.getErrCode());
         }
 
+        ImageSearchAddPO imageSearchAddPO = new ImageSearchAddPO();
+        imageSearchAddPO.setRequestId(acsResponse.getRequestId());
+        imageSearchAddPO.setImageName(multipartFile.getOriginalFilename());
+        imageSearchAddPO.setCustomContent(request.getCustomContent());
+        imageSearchAddPO.setProductId(productReqData.getProductId());
+        imageSearchAddPO.setResult(JSON.toJSONString(acsResponse));
+        imageSearchAddPO.setCategoryId(request.getCategoryId().toString());
+        imageSearchAddPO.setInstanceName(instanceName);
+        imageSearchAddPO.setCreated(new Date());
+        imageSearchAddPO.setModified(new Date());
+        imageSearchAddMapper.saveImageSearch(imageSearchAddPO);
         return  acsResponse;
     }
+
+
 
 }
