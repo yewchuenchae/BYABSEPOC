@@ -164,6 +164,7 @@ public class ProductManager {
             String customContent = auction.getCustomContent();
             if (!StringUtils.isEmpty(customContent)){
                 // customContent 为json字符串
+                log.info("返回结果的customContent:{}",customContent);
                 ProductVO productVO1 = JSON.parseObject(customContent, ProductVO.class);
                 if (productVO1 != null){
                     productVO.setBrand(productVO1.getBrand());
