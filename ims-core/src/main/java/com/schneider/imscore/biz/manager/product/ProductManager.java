@@ -168,7 +168,7 @@ public class ProductManager {
                 try {
                     productVO1 = JSON.parseObject(customContent, ProductVO.class);
                 } catch (Exception e) {
-                    log.info("customContent json结果解析失败customContent:{}",customContent);
+                    log.error("customContent json结果解析失败customContent:{}",customContent,e);
                     continue;
                 }
                 if (productVO1 != null){
