@@ -12,9 +12,9 @@ spring:
       min-idle: 5
       initial-size: 5
   redis:
-    host: r-gs5mxemv6hsn5jdhi5.redis.singapore.rds.aliyuncs.com
+    host: 192.168.95.70
     port: 6379
-    password: schnei@123
+    password: 123
     timeout: 10000
     database: 0
     jedis:
