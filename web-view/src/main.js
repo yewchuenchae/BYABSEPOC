@@ -11,6 +11,7 @@ import 'mint-ui/lib/style.css'
 import './assets/js/flexible'
 import '@/global/components.js'
 import '@/global/filter.js'
+import './request';
 
 
 

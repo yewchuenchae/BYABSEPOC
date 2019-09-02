@@ -1,10 +1,8 @@
 <template>
     <div id="selection-page">
-      <div class="head-img">
-        <img src="./../../assets/img/selection_1.png" alt="">
-      </div>
-      <p class="desc-box" @click="goGuide">Relacing a Schneider Electric Relay</p>
-      <p class="desc-box drive-box" @click="goGuide">Relacing a Non-Schneider Drive</p>
+      <img src="./../../assets/img/selection_1.png" alt="">
+      <p class="desc-box" @click="goGuide">Replacing Schneider Electric Relay</p>
+      <p class="desc-box drive-box" @click="goGuide">Replacing Non-Schneider Drive</p>
 
     </div>
 </template>
@@ -26,29 +24,22 @@
   #selection-page{
     overflow: hidden;
     height:100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    .head-img{
-      margin-top:3.57rem;
-      img{
-        height:1.34rem;
-        width:4.50rem;
-      }
+    img{
+      display: block;
+      height: 1.34rem;
+      width: 4.50rem;
+      margin: 2.67rem auto;
     }
     .desc-box{
-      margin-top:2rem;
-      height:1.2rem;
-      width:7.03rem;
+      box-sizing: border-box;
+      margin: 0.2rem 0.24rem 0;
+      height: 1.2rem;
       text-align: center;
       line-height: 1.2rem;
-      background:rgba(255,255,255,1);
-      box-shadow:1px 0px 17px 3px rgba(61,205,88,0.1);
-      border-radius:8px;
-      /*font-size:36px;*/
-      font-family:PingFangSC;
-      font-weight:400;
-      color:rgba(102,102,102,1);
+      background: #FFF;
+      border-radius: 8px;
+      color: #666;
+      box-shadow: 1px 0px 17px 3px rgba(61,205,88,0.1);
     }
     .drive-box{
       margin-top:0.5rem;

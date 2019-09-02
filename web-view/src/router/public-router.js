@@ -1,18 +1,12 @@
-const Guide = () => import('@/pages/guide') // 引导页
 const Home = () => import('@/pages/home')   // 首页
-const Selection = () => import('@/pages/selection') // 选择页
+const Details = () => import('@/pages/details')   // 详情页
+// const Test = () => import('@/pages/test')   //  测试页
 
-const Tabbar = () => import ('@/components/tabbar') // 底部导航栏
 export default [
     {
         path: '/',
-        redirect: '/selection' 
-    },
-    {
-        path: '/guide',
-        name: 'guide',
-        components: {
-            default: Guide
+        redirect: to => {
+            return '/home'
         }
     },
     {
@@ -20,13 +14,23 @@ export default [
         name: 'home',
         components: {
             default: Home,
+        },
+        meta: {
+            keepAlive:1111
         }
     }, 
     {
-        path: '/selection',
-        name: 'selection',
+        path: '/details',
+        name: 'details',
         components: {
-            default: Selection
+            default: Details
         }
-    }
+    },
+    // {
+    //     path: '/test',
+    //     name: 'test',
+    //     components: {
+    //         default: Test
+    //     }
+    // }
 ]

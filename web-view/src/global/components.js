@@ -1,11 +1,11 @@
 import Vue from 'vue';
 // 自定义组件
-import HelloWorld from './../components/hello-world.vue';
+import SimpleCropper from './../components/SimpleCropper.vue';
 
 // 配置挂载组件
 const components = {
     // 组件名称: 组件
-    'my-dom': HelloWorld,
+    'SimpleCropper': SimpleCropper,
 }
 
 // 组件挂载

@@ -7,18 +7,18 @@
             :continuous="false">
             <mt-swipe-item class="item">
                 <img src="./../../assets/img/guide_1.png" alt="">
-                <p class="title">replace</p>
-                <p class="text">engineer wants to replace an unknownfaulty component</p>
+                <p class="title">Replace</p>
+                <p class="text">engineer wants to replace an unknown faulty component</p>
             </mt-swipe-item>
             <mt-swipe-item class="item">
                 <img src="./../../assets/img/guide_2.png" alt="">
-                <p class="title">search</p>
+                <p class="title">Search</p>
                 <p class="text">goes to e-commerce website to search for component</p>
-                <div class="goHome"><span @click="goHome">Click Enter</span></div>
+                <div class="goHome"><span @click="goHome">Click To Enter</span></div>
             </mt-swipe-item>
         </mt-swipe>
         <div class="time">
-            {{time}}<span>skip</span>
+            {{time}}<span @click="goHome">skip</span>
         </div>
     </div>
 </template>

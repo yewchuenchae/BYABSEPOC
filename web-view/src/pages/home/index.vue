@@ -1,28 +1,39 @@
 <template>
+<keep-alive>
     <div id="home-page">
         <div class="search">
             <img class="search-icon" src="./../../assets/img/search_icon.png" alt="">
-            <p>Enter part number/keywords</p>
-            <img class="search-camera" src="./../../assets/img/search_camera.png" alt="">
-        </div>
-        <div class="tab">
-            <span :class="active == 0 ? 'active' : ''" @click="changeActive(0)">All Products</span>
-            <span :class="active == 1 ? 'active' : ''" @click="changeActive(1)">Manufacturers</span>
+            <!-- <input v-model='sku' placeholder="Enter part number/keywords" type="text"/> -->
+            <form @submit.prevent="formSubmit" action="javascript:return true">
+                <input type="search" v-model="sku" @keydown="search2($event)"  placeholder="Enter part number">
+            </form>
+            <img class="search-camera" @click="camera" src="./../../assets/img/search_camera.png" alt="">
         </div>
         <div 
-            class="box"
-            v-infinite-scroll="loadMore"
-            infinite-scroll-disabled="loading"
-            infinite-scroll-distance="10">
+            class="box">
             <div 
                 class="item"
                 v-for="(item, idx) in list"
-                :key="idx">
-                <img :src="item.img" alt="">
-                <p>{{item.title}}</p>
+                :key="idx"
+                @click="goDetails(item.productId)">
+                <p class="brand">{{item.brand}}</p>
+                <p class="productId">{{item.productId}}</p>
+                <p class="category">{{item.category}}</p>
+                <p class="family">{{item.family}}</p>
+                <p class="description">{{item.description}}</p>
+            </div>
+            <div v-show='list.length==0' class="no-data">
+                NO Data
             </div>
         </div>
+        <input 
+            id="camera" 
+            type="file" 
+            accept="image/gif,image/jpeg,image/jpg,image/png,image/svg" 
+            capture="camera"
+            @change="changeFile();">
     </div>
+</keep-alive>
 </template>
 <script>
 /** 
@@ -34,128 +45,65 @@ export default {
     name: 'Home',
     data(){
         return{
-            loading: false,
-            active:0,
+            sku:'',
             list:[],
         }
     },
     mounted(){
-        this.list = [
-            {
-                img:'https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=264542271,452860046&fm=115&gp=0.jpg',
-                title: 'Electromechanical Relays'
-            },
-            {
-                img:'https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=4021696477,125879773&fm=115&gp=0.jpg',
-                title: 'Variable Speed Drives'
-            },
-            {
-                img:'http://img0.imgtn.bdimg.com/it/u=550933263,2383635639&fm=15&gp=0.jpg',
-                title: 'Ethernet Swiches'
-            },
-            {
-                img:'http://img0.imgtn.bdimg.com/it/u=1065322161,573763851&fm=15&gp=0.jpg',
-                title: 'Electromechanical Relays'
-            },
-            {
-                img:'http://img3.imgtn.bdimg.com/it/u=4206409568,1801685465&fm=26&gp=0.jpg',
-                title: 'Variable Speed Drives'
-            },
-            {
-                img:'http://img3.imgtn.bdimg.com/it/u=4071158148,2637611101&fm=15&gp=0.jpg',
-                title: 'Ethernet Swiches'
-            },
-            {
-                img:'http://img1.imgtn.bdimg.com/it/u=1977922514,2762107149&fm=15&gp=0.jpg',
-                title: 'Variable Speed Drives'
-            },
-        ];
+        this.list = [];
     },
     methods: {
-        /** 
-         * @method 切换选中tab
-         * @param {Number} active 选中tab下标
-        */
-        changeActive(active){
-            this.active = active;
-            Indicator.open();
-            setTimeout(() => {
-                if(this.active){
-                    this.list = [
-                        {
-                            img: 'http://img1.imgtn.bdimg.com/it/u=3859570704,3506148431&fm=11&gp=0.jpg',
-                            title: 'Google',
-                        },
-                        {
-                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
-                            title: 'Apple Inc',
-                        },
-                        {
-                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
-                            title: 'Microsoft',
-                        },
-                        {
-                            img: 'http://img1.imgtn.bdimg.com/it/u=3859570704,3506148431&fm=11&gp=0.jpg',
-                            title: 'Google',
-                        },
-                        {
-                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
-                            title: 'Apple Inc',
-                        },
-                        {
-                            img: 'http://img5.imgtn.bdimg.com/it/u=876334890,2639198549&fm=11&gp=0.jpg',
-                            title: 'Microsoft',
-                        },
-                    ]
-                }else{
-
-                    this.list = [
-                        {
-                            img:'https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=264542271,452860046&fm=115&gp=0.jpg',
-                            title: 'Electromechanical Relays'
-                        },
-                        {
-                            img:'https://ss2.bdstatic.com/70cFvnSh_Q1YnxGkpoWK1HF6hhy/it/u=4021696477,125879773&fm=115&gp=0.jpg',
-                            title: 'Variable Speed Drives'
-                        },
-                        {
-                            img:'http://img0.imgtn.bdimg.com/it/u=550933263,2383635639&fm=15&gp=0.jpg',
-                            title: 'Ethernet Swiches'
-                        },
-                        {
-                            img:'http://img0.imgtn.bdimg.com/it/u=1065322161,573763851&fm=15&gp=0.jpg',
-                            title: 'Electromechanical Relays'
-                        },
-                        {
-                            img:'http://img3.imgtn.bdimg.com/it/u=4206409568,1801685465&fm=26&gp=0.jpg',
-                            title: 'Variable Speed Drives'
-                        },
-                        {
-                            img:'http://img3.imgtn.bdimg.com/it/u=4071158148,2637611101&fm=15&gp=0.jpg',
-                            title: 'Ethernet Swiches'
-                        },
-                        {
-                            img:'http://img1.imgtn.bdimg.com/it/u=1977922514,2762107149&fm=15&gp=0.jpg',
-                            title: 'Variable Speed Drives'
-                        },
-                    ];
-                }
-                Indicator.close();
-            }, 500);
+        formSubmit () {
+            return false
+        },
+        search(){
+            console.log(this)
+            this.goDetails(this.sku)
+        },
+        search2(ev){
+            if(ev.keyCode == 13) {  //键盘回车的编码是13
+                this.search();
+            }
         },
         /** 
-         * @method 监听滚动到底部
+         * @method 进入详情页
+         * @param productId 商品sku
         */
-        loadMore(){
-            if(!this.loading){
-                this.loading = true;
-                Indicator.open();
-                setTimeout(() => {
-                    this.list = [...this.list,...this.list.splice(0,10)];
-                    this.loading = false;
-                    Indicator.close();
-                }, 3000);
+        goDetails(productId){
+            this.$router.push({
+                name: 'details',
+                query: {
+                    productId
+                }
+            })
+        },
+        /** 
+         * @method 点击相机回调
+        */
+        camera(){
+            let camera = document.getElementById('camera');
+            camera.click();
+        },
+        /** 
+         * @method 监听图片选择
+        */
+        changeFile(){
+            let camera = document.getElementById('camera');
+            let req = {
+                file: camera.files[0]
             }
+            Indicator.open();
+            this.apis.upload(req).then((res)=>{
+                Indicator.close();
+                if(res.code == 200){
+                    this.list = res.data;
+                }else{
+                    this.list = [];
+                }
+            }).catch((err)=>{
+                Indicator.close();
+                console.log(err)
+            })
         }
     }
 }
@@ -181,61 +129,77 @@ export default {
             height: 0.3rem;
             margin-right: 0.2rem;
         }
-        p{
+        form{
             flex:1;
-            font-size: 0.26rem;
-            color:#999;
-            line-height: 0.37rem;
+            height: 0.37rem;
+            margin-right: 0.2rem;
+            input{
+                width: 100%;
+                font-size: 0.26rem;
+                height: 0.37rem;
+                line-height: 0.37rem;
+                background:rgba(247,247,247,1);
+                border:0;
+            }
         }
         .search-camera{
             height: 0.34rem;
             height: 0.3rem;
         }
     }
-    .tab{
-        margin: 0.2rem 0.24rem 0;
-        height: 0.48rem;
-        span{
-            display: inline-block;
-            line-height: 0.42rem;
-            color: #999;
-            font-size: 0.3rem;
-            margin-right: 0.5rem;
-            &:last-child{
-                margin:0;
-            }
-        }
-        .active{
-            color: $color;
-            line-height: 0.48rem;
-            font-size: 0.34rem;
-        }
-    }
     .box{
         box-sizing: border-box;
         padding-top: 0.1rem 0 0;
+        position: relative;
         flex: 1;
         overflow-y: auto;
         .item{
             box-sizing: border-box;
             margin: 0.3rem 0.24rem 0;
-            height: 2rem;
+            height: 3rem;
             padding: 0.2rem;
             border-radius: 0.18rem;
             overflow: hidden;
             box-shadow:0.01rem 0 0.17rem 0.03rem rgba(61,205,88,0.1);
-            display: flex;
-            align-items: center;
-            img{
-                height: 1.6rem;
-                width: 1.6rem;
-                margin-right: 0.3rem;
-            }
             p{
-                line-height: 0.45rem;
-                font-size: 0.32rem;
+                width:100%;
+                font-size: 0.28rem;
+            }
+            .brand{
+                // font-size: 0.34rem;
+                font-weight: 600;
+            }
+            .productId{
+                line-height: 0.30rem;
+                // font-size: 0.22rem;
+                margin-top:0.12rem;
+            }
+            .category,.family{
+                line-height: 0.36rem;
+                // font-size: 0.28rem;
+                margin-top:0.04rem;
+            }
+            .description{
+                margin-top:0.12rem;
+                // font-size: 0.26rem;
+                line-height: 0.36rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;/*超出3行部分显示省略号，去掉该属性 显示全部*/
+                -webkit-box-orient: vertical;
             }
         }
+        .no-data{
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%,)
+        }
+    }
+    #camera{
+        display: none;
     }
 }
 </style>

@@ -1,13 +1,18 @@
 <template>
   <div id="app">
-      <router-view></router-view>
+    <router-view></router-view>
     <router-view name="tabbar"></router-view>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  data(){
+    return{}
+  },
+  mounted(){
+  }
 }
 </script>
 
@@ -16,5 +21,6 @@ export default {
 #app {
   height:100%;
   margin: 0 auto;
+  /* overflow: auto; */
 }
 </style>
