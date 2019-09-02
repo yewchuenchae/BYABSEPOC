@@ -47,6 +47,10 @@ public class Result<T> implements Serializable {
         return new Result(resultCode.getCode(), resultCode.getDesc());
     }
 
+    public static Result buildFailed(String resultCode, String message) {
+        return new Result(resultCode, message);
+    }
+
     public String getCode() {
         return code;
     }

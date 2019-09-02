@@ -1,9 +1,17 @@
 <template>
     <div id="selection-page">
+<<<<<<< HEAD
       <img src="./../../assets/img/selection_1.png" alt="">
       <p class="desc-box" @click="goGuide">Replacing Schneider Electric Relay</p>
       <p class="desc-box drive-box" @click="goGuide">Replacing Non-Schneider Drive</p>
 
+=======
+      <div class="head-img">
+        <img src="./../../assets/img/selection_1.png" alt="">
+      </div>
+      <p class="desc-box" @click="goGuide">Relacing a Schneider Electric Relay</p>
+      <p class="desc-box drive-box" @click="goGuide">Relacing a Non-Schneider Drive</p>
+>>>>>>> 6dda5037bd20a542e5572691dae15b1fa9cd77a0
     </div>
 </template>
 

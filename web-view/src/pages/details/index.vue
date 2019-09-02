@@ -1,5 +1,6 @@
 <template>
     <div id="details-page">
+        <!-- 施耐德组件 -->
         <div id="widgetFrame" style="width:1280px; height:800px"></div>
     </div>
 </template>
@@ -11,13 +12,11 @@
 export default {
     name: 'Details',
     data(){
-        return{
-            value:''
-        }
+        return{}
     },
     mounted(){
+        // 获取组件sku并初始化
         let id = this.$route.query.productId;
-        
         if(id){
             id = id.toUpperCase();
             var reference = id;
@@ -28,24 +27,6 @@ export default {
             var widgetOptions = {};
             var wrapperInstance = seWidgetWrapper.startFromReference(reference, language, country, project, token, widgetOptions);
         }
-
-        // var dataset = {
-        //     type: "ez",
-        //     value: 'ZELIO_PLUGIN_RELAY',
-        //     // value: 'ZELIO_CTRL',
-        //     // value: 'ZELIO_TIME',    // 0
-        //     // value: 'ZELIO_SSR',      // 0
-        //     // value: 'Altivar 12',      
-        //     // value: 'Altivar Easy 310',      
-        //     // value: 'Altivar 320',            
-        //     // value: 'Altivar 340', 
-        // };
-        // var language = 'EN';
-        // var country = 'SCHINT';
-        // var project = 'ANY';
-        // var token = 'Bearer 377feb05b91a96a12a6d06232db552c8';
-        // var widgetOptions = {};
-        // var wrapperInstance = seWidgetWrapper.startWidget(dataset, language, country, project, token, widgetOptions);
     }
 }
 </script>

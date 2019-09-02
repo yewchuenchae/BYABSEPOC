@@ -6,7 +6,6 @@ package com.schneider.imscore.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -20,45 +19,10 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
  * @version : RedisConfig.java, v 0.1 2019/6/4 15:48 by Exp $$
  * @Description redis连接配置
  */
-//@Configuration
-//@EnableRedisHttpSession
+@Configuration
+@EnableRedisHttpSession
 public class RedisConfig {
 
-    @Value("${redis.host}")
-    private String host;
-
-    @Value("${redis.password}")
-    private String password;
-
-    @Value("${redis.port}")
-    private Integer port;
-
-    @Value("${redis.pool.max-idle}")
-    private Integer maxIdle;
-
-    @Value("${redis.timeout}")
-    private Integer timeout;
-
-    @Value("${redis.pool.max-wait}")
-    private Integer maxWait;
-
-    @Value("${redis.timeBetweenEvictionRunsMillis}")
-    private long timeBetweenEvictionRunsMillis;
-
-    @Value("${redis.testOnBorrow}")
-    private boolean testOnBorrow;
-
-    @Value("${redis.testWhileIdle}")
-    private boolean testWhileIdle;
-
-    @Value("${redis.database}")
-    private int database;
-
-    @Value("${redis.pool.max-active}")
-    private int maxActive;
-
-    @Value("${redis.pool.min-mvictable-idle-time-millis}")
-    private long minEvictableIdleTimeMillis;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
