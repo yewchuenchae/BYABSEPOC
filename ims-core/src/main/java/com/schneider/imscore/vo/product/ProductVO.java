@@ -18,16 +18,29 @@ public class ProductVO implements Serializable {
     private String productId;
     /**品牌*/
     private String brand;
+    private String brandChinese;
+    private String brandPortuguese;
+    private String brandRussian;
     /**种族*/
     private String family;
+    private String familyChinese;
+    private String familyPortuguese;
+    private String familyRussian;
     /**类别*/
     private String category;
+    private String categoryChinese;
+    private String categoryPortuguese;
+    private String categoryRussian;
     /**说明*/
     private String description;
+    private String descriptionChinese;
+    private String descriptionPortuguese;
+    private String descriptionRussian;
     /**oss key*/
     private String key;
     /**url*/
     private String url;
+
 
     @Override
     public boolean equals(Object obj) {

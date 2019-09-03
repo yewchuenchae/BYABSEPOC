@@ -30,7 +30,7 @@ public class ImageSizeUtil {
      * @return
      */
     public static int getImageLengthOfSide(MultipartFile params){
-        int lengthSize = 0;
+        int lengthSize = 2048;
         Map<String, Integer> result = new HashMap<>();
         // 获取图片格式
         String suffixName = getSuffixNameInfo(params);
@@ -60,9 +60,11 @@ public class ImageSizeUtil {
      */
     public static String getSuffixNameInfo(MultipartFile params){
         String result = "";
+        String originalFilename = params.getOriginalFilename();
+
         // 图片后缀
-        String suffixName = params.getOriginalFilename().substring(
-                params.getOriginalFilename().lastIndexOf(".")).toLowerCase();
+        String suffixName = originalFilename.substring(
+                originalFilename.lastIndexOf(".")).toLowerCase();
 
         if(suffixName.indexOf("png")>0){
             result = "png";

@@ -117,10 +117,30 @@ public class ProductManager {
                         productVOS = productVOList(auctions, productVOS,4);
                         ProductVO productVO = new ProductVO();
                         productVO.setBrand(productOcrPO.getBrand());
-                        productVO.setFamily(productOcrPO.getFamily());
-                        productVO.setDescription(productOcrPO.getDescription());
+                        productVO.setBrandChinese(productOcrPO.getBrandChinese());
+                        productVO.setBrandPortuguese(productOcrPO.getBrandPortuguese());
+                        productVO.setBrandRussian(productOcrPO.getBrandRussian());
+
                         productVO.setCategory(productOcrPO.getCategory());
+                        productVO.setCategoryChinese(productOcrPO.getCategoryChinese());
+                        productVO.setCategoryPortuguese(productOcrPO.getCategoryPortuguese());
+                        productVO.setCategoryRussian(productOcrPO.getCategoryRussian());
+
+                        productVO.setDescription(productOcrPO.getDescription());
+                        productVO.setDescriptionChinese(productOcrPO.getDescriptionChinese());
+                        productVO.setDescriptionPortuguese(productOcrPO.getDescriptionPortuguese());
+                        productVO.setDescriptionRussian(productOcrPO.getDescriptionRussian());
+
+                        productVO.setFamily(productOcrPO.getFamily());
+                        productVO.setFamilyChinese(productOcrPO.getFamilyChinese());
+                        productVO.setFamilyPortuguese(productOcrPO.getDescriptionPortuguese());
+                        productVO.setFamilyRussian(productOcrPO.getDescriptionRussian());
                         productVO.setProductId(productOcrPO.getReference());
+
+                        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+                        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
+                        productVO.setUrl(url);
+
                         productVOS.add(productVO);
                         productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
 
@@ -177,9 +197,24 @@ public class ProductManager {
                 if (productVO1 != null){
                     String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
                     productVO.setBrand(productVO1.getBrand());
+                    productVO.setBrandChinese(productVO1.getBrandChinese());
+                    productVO.setBrandPortuguese(productVO1.getBrandPortuguese());
+                    productVO.setBrandRussian(productVO1.getBrandRussian());
+
                     productVO.setCategory(productVO1.getCategory());
+                    productVO.setCategoryChinese(productVO1.getCategoryChinese());
+                    productVO.setCategoryPortuguese(productVO1.getCategoryPortuguese());
+                    productVO.setCategoryRussian(productVO1.getCategoryRussian());
+
                     productVO.setDescription(productVO1.getDescription());
+                    productVO.setDescriptionChinese(productVO1.getDescriptionChinese());
+                    productVO.setDescriptionPortuguese(productVO1.getDescriptionPortuguese());
+                    productVO.setDescriptionRussian(productVO1.getDescriptionRussian());
+
                     productVO.setFamily(productVO1.getFamily());
+                    productVO.setFamilyChinese(productVO1.getFamilyChinese());
+                    productVO.setFamilyPortuguese(productVO1.getDescriptionPortuguese());
+                    productVO.setFamilyRussian(productVO1.getDescriptionRussian());
                     productVO.setUrl(url);
                     productVOS.add(productVO);
                 }
