@@ -68,8 +68,8 @@ public class ImageSizeUtil {
             result = "png";
         }else if(suffixName.indexOf("jpg")>0){
             result = "jpg";
-        }else if(suffixName.indexOf("jpeg")>0){
-            result = "jpeg";
+        }else {
+            result = "png";
         }
 
         return result;
@@ -88,7 +88,7 @@ public class ImageSizeUtil {
         if (imageBytes == null || imageBytes.length <= 0) {
             return imageBytes;
         }
-        long srcSize = imageBytes.length;
+//        long srcSize = imageBytes.length;
         double accuracy = 0.5;
         double v = imageLengthSize;
         try {
