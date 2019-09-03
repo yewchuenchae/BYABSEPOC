@@ -159,6 +159,7 @@ public class ProductManager {
      * @return
      */
     private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions){
+        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
         List<ProductVO> productVOS = new ArrayList<>();
         for (SearchImageResponse.Auction auction: auctions) {
             ProductVO productVO = new ProductVO();
@@ -174,10 +175,12 @@ public class ProductManager {
                     continue;
                 }
                 if (productVO1 != null){
+                    String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
                     productVO.setBrand(productVO1.getBrand());
                     productVO.setCategory(productVO1.getCategory());
                     productVO.setDescription(productVO1.getDescription());
                     productVO.setFamily(productVO1.getFamily());
+                    productVO.setUrl(url);
                     productVOS.add(productVO);
                 }
             }

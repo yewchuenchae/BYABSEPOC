@@ -47,7 +47,7 @@ public class ImageSizeUtil {
                 lengthSize = reader.getHeight(0);
             }
         } catch (IOException e) {
-            log.error("图片压缩失败",e);
+            log.error("图片压缩失败，suffixName :{}",suffixName,e);
         }
 
         return lengthSize;

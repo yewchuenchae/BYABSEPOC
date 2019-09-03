@@ -24,6 +24,10 @@ public class ProductVO implements Serializable {
     private String category;
     /**说明*/
     private String description;
+    /**oss key*/
+    private String key;
+    /**url*/
+    private String url;
 
     @Override
     public boolean equals(Object obj) {
