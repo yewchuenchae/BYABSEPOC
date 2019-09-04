@@ -29,7 +29,7 @@ public class ImageSizeUtil {
     /**
      * 支持上传的图片后缀
      */
-    private static final String[] SUFFIXS   = {"png", "jpg"};
+    private static final String[] SUFFIXS   = {"png", "jpg","jpeg"};
 
 
     /**
