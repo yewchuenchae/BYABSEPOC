@@ -78,8 +78,8 @@ public class ImageSizeUtil {
             result = "png";
         }else if(suffixName.indexOf("jpg")>0){
             result = "jpg";
-        }else {
-            result = "png";
+        }else if (suffixName.indexOf("jpeg")>0){
+            result = "jpg";
         }
 
         return result;
