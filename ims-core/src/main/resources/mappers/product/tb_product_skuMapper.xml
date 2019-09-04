@@ -26,6 +26,11 @@
       <result column="created" property="created" jdbcType="TIMESTAMP" />
       <result column="modified" property="modified" jdbcType="TIMESTAMP" />
   </resultMap>
+    <sql id="Table_Name">
+  tb_product_sku
+  </sql>
+
+
   <sql id="Base_Column_List" >
     id, reference, brand, brand_chinese, brand_portuguese, brand_russian, family, family_chinese,
     family_portuguese, family_russian, category, category_chinese, category_portuguese,
@@ -35,42 +40,20 @@
   <select id="selectProductByReference" resultMap="BaseResultMap" parameterType="java.lang.String" >
     select 
     <include refid="Base_Column_List" />
-    from tb_product_sku
-    where reference = #{reference,jdbcType=BIGINT}
+    from <include refid="Table_Name"/>
+    where reference = #{reference,jdbcType=VARCHAR}
   </select>
 
-  <update id="updateByPrimaryKeySelective" parameterType="com.schneider.imscore.po.product.ProductSkuPO">
-    update tb_product_sku
-    <set >
-      <if test="reference != null" >
-        reference = #{reference,jdbcType=VARCHAR},
-      </if>
-      <if test="brand != null" >
-        brand = #{brand,jdbcType=VARCHAR},
-      </if>
-      <if test="family != null" >
-        family = #{family,jdbcType=VARCHAR},
-      </if>
-      <if test="category != null" >
-        category = #{category,jdbcType=VARCHAR},
-      </if>
-      <if test="description != null" >
-        description = #{description,jdbcType=VARCHAR},
-      </if>
-      <if test="creator != null" >
-        creator = #{creator,jdbcType=VARCHAR},
-      </if>
-      <if test="modifier != null" >
-        modifier = #{modifier,jdbcType=VARCHAR},
-      </if>
-      <if test="created != null" >
-        created = #{created,jdbcType=TIMESTAMP},
-      </if>
-      <if test="modified != null" >
-        modified = #{modified,jdbcType=TIMESTAMP},
-      </if>
-    </set>
-    where id = #{id,jdbcType=BIGINT}
-  </update>
+    <select id="listProductsBySku" resultMap="BaseResultMap">
+        select  <include refid="Base_Column_List" />
+        from <include refid="Table_Name"/>
+        <where>
+            reference in
+            <foreach collection="references" open="(" close=")" separator="," item="sku">
+                #{sku}
+            </foreach>
+
+        </where>
+    </select>
 
 </mapper>

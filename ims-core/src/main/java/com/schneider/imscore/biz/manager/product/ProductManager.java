@@ -93,7 +93,6 @@ public class ProductManager {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
         List<String> text = imageOcr(multipartFile);
-        ProductSkuPO productOcrPO = null;
 
         // 2.图片搜索
         SearchImageResponse response = imageSearch(multipartFile);
@@ -102,20 +101,28 @@ public class ProductManager {
             if (!CollectionUtils.isEmpty(auctions)){
                 if (!CollectionUtils.isEmpty(text)){
                     // ocr的结果去数据库查询 查到：合并   查不到：返回图搜
-                    for (String str: text) {
-                        ProductSkuPO productSkuPO = productSkuMapper.selectProductByReference(str);
-                        if (productSkuPO != null){
-                            productOcrPO = productSkuPO;
-                            break;
+                    List<ProductSkuPO> productSkuPOs = productSkuMapper.listProductsBySku(text);
+                    List<String> productIds = new ArrayList<>();
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
+                        for (String str: text) {
+                            if (str.contains("O")){
+                                String o = str.replaceAll("O", "0");
+                                productIds.add(o);
+                            }
+                        }
+                        if (!CollectionUtils.isEmpty(productIds)){
+                            productSkuPOs = productSkuMapper.listProductsBySku(productIds);
                         }
                     }
                     // ocr 结果未查到
-                    if (productOcrPO == null){
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
                         productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
                     }else {
                         // ocr结果查到了
                         productVOS = productVOList(auctions, productVOS,4);
                         ProductVO productVO = new ProductVO();
+                        ProductSkuPO productOcrPO = productSkuPOs.get(0);
+
                         productVO.setBrand(productOcrPO.getBrand());
                         productVO.setBrandChinese(productOcrPO.getBrandChinese());
                         productVO.setBrandPortuguese(productOcrPO.getBrandPortuguese());

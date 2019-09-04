@@ -30,7 +30,7 @@ public class ImageSizeUtil {
      * @return
      */
     public static int getImageLengthOfSide(MultipartFile params){
-        int lengthSize = 2048;
+        int lengthSize = 5000;
         Map<String, Integer> result = new HashMap<>();
         // 获取图片格式
         String suffixName = getSuffixNameInfo(params);
