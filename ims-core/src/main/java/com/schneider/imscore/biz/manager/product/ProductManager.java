@@ -151,7 +151,7 @@ public class ProductManager {
                         productVOS.add(productVO);
                         productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
 
-                        Collections.swap(productVOS, 4, 0);
+                        Collections.swap(productVOS, productVOS.size()-1, 0);
                     }
                 }else {
                     productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
