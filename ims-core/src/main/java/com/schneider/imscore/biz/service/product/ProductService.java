@@ -38,6 +38,11 @@ public class ProductService {
             if (multipartFile == null){
                 return new Result(ResultCode.ILLEGAL_PARAM.getCode(),ResultCode.ILLEGAL_PARAM.getDesc());
             }
+
+            if (!ImageSizeUtil.checkSuffix( multipartFile.getOriginalFilename())){
+                return new Result(ResultCode.ILLEGAL_PARAM.getCode(),ResultCode.ILLEGAL_PARAM.getDesc());
+            }
+
             // 图片压缩
             MultipartFile[] multipartFiles = new MultipartFile[1];
             multipartFiles[0] = multipartFile;

@@ -2,6 +2,7 @@ package com.schneider.imscore.util;
 
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
@@ -24,6 +25,13 @@ import java.util.Map;
  */
 @Slf4j
 public class ImageSizeUtil {
+
+    /**
+     * 支持上传的图片后缀
+     */
+    private static final String[] SUFFIXS   = {"png", "jpg"};
+
+
     /**
      * 获取图片最长边长度
      * @param params
@@ -65,7 +73,7 @@ public class ImageSizeUtil {
         // 图片后缀
         String suffixName = originalFilename.substring(
                 originalFilename.lastIndexOf(".")).toLowerCase();
-
+        log.info("suffixName后缀"+suffixName);
         if(suffixName.indexOf("png")>0){
             result = "png";
         }else if(suffixName.indexOf("jpg")>0){
@@ -167,6 +175,24 @@ public class ImageSizeUtil {
         }
 
         return result;
+    }
+
+    /**
+     * 校验支持的文件格式
+     * @param fileName
+     * @return 支持返回true
+     */
+    public static Boolean checkSuffix(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return Boolean.FALSE;
+        }
+        String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+        for (String string : SUFFIXS) {
+            if (StringUtils.equalsIgnoreCase(string, suffix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
