@@ -25,4 +25,11 @@ public interface ProductSkuMapper {
      * @return
      */
     List<ProductSkuPO> listProductsBySku(@Param("references") List<String> references);
+
+    /**
+     * 模糊查询sku
+     * @param references
+     * @return
+     */
+    List<ProductSkuPO> listProductsLikeSku(@Param("references") List<String> references);
 }

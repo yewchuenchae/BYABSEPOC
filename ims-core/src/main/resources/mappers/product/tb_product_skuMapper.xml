@@ -56,4 +56,14 @@
         </where>
     </select>
 
+    <select id="listProductsLikeSku" resultMap="BaseResultMap">
+        select  <include refid="Base_Column_List" />
+        from <include refid="Table_Name"/>
+        <where>
+            <foreach collection="references"  separator="or" item="sku">
+                reference   like   CONCAT('%',#{sku,jdbcType=VARCHAR},'%')
+            </foreach>
+        </where>
+    </select>
+
 </mapper>
