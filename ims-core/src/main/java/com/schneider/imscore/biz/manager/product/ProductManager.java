@@ -18,6 +18,7 @@ import com.aliyuncs.imagesearch.model.v20190325.SearchImageRequest;
 import com.aliyuncs.imagesearch.model.v20190325.SearchImageResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.schneider.imscore.enums.LanguageEnum;
 import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
 import com.schneider.imscore.po.product.ImageSearchAddPO;
@@ -90,7 +91,7 @@ public class ProductManager {
      * @throws BizException
      * @throws ClientException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException {
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile,String language) throws BizException {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
         List<String> textOcr = imageOcr(multipartFile);
@@ -130,14 +131,14 @@ public class ProductManager {
 
                     // ocr 结果未查到
                     if (CollectionUtils.isEmpty(productSkuPOs)){
-                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
                     }else {
                         // ocr结果查到了
-                        productVOS = productVOList(auctions, productVOS,4);
+                        productVOS = productVOList(auctions, productVOS,4,language);
                         ProductVO productVO = new ProductVO();
                         ProductSkuPO productOcrPO = productSkuPOs.get(0);
                         // 初始化
-                        init(productVO,productOcrPO);
+                        init(productVO,productOcrPO,language);
 
                         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
                         String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
@@ -149,7 +150,7 @@ public class ProductManager {
                         Collections.swap(productVOS, productVOS.size()-1, 0);
                     }
                 }else {
-                    productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                    productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
                 }
             }
         }
@@ -162,27 +163,29 @@ public class ProductManager {
      * @param productVO
      * @param productOcrPO
      */
-    private void init(ProductVO productVO ,ProductSkuPO productOcrPO){
-        productVO.setBrand(productOcrPO.getBrand());
-        productVO.setBrandChinese(productOcrPO.getBrandChinese());
-        productVO.setBrandPortuguese(productOcrPO.getBrandPortuguese());
-        productVO.setBrandRussian(productOcrPO.getBrandRussian());
-
-        productVO.setCategory(productOcrPO.getCategory());
-        productVO.setCategoryChinese(productOcrPO.getCategoryChinese());
-        productVO.setCategoryPortuguese(productOcrPO.getCategoryPortuguese());
-        productVO.setCategoryRussian(productOcrPO.getCategoryRussian());
-
-        productVO.setDescription(productOcrPO.getDescription());
-        productVO.setDescriptionChinese(productOcrPO.getDescriptionChinese());
-        productVO.setDescriptionPortuguese(productOcrPO.getDescriptionPortuguese());
-        productVO.setDescriptionRussian(productOcrPO.getDescriptionRussian());
-
-        productVO.setFamily(productOcrPO.getFamily());
-        productVO.setFamilyChinese(productOcrPO.getFamilyChinese());
-        productVO.setFamilyPortuguese(productOcrPO.getDescriptionPortuguese());
-        productVO.setFamilyRussian(productOcrPO.getDescriptionRussian());
+    private void init(ProductVO productVO ,ProductSkuPO productOcrPO,String language){
         productVO.setProductId(productOcrPO.getReference());
+        if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrand());
+            productVO.setCategory(productOcrPO.getCategory());
+            productVO.setDescription(productOcrPO.getDescription());
+            productVO.setFamily(productOcrPO.getFamily());
+        }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandChinese());
+            productVO.setCategory(productOcrPO.getCategoryChinese());
+            productVO.setDescription(productOcrPO.getDescriptionChinese());
+            productVO.setFamily(productOcrPO.getFamilyChinese());
+        }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandPortuguese());
+            productVO.setCategory(productOcrPO.getCategoryPortuguese());
+            productVO.setDescription(productOcrPO.getDescriptionPortuguese());
+            productVO.setFamily(productOcrPO.getDescriptionPortuguese());
+        }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandRussian());
+            productVO.setCategory(productOcrPO.getCategoryRussian());
+            productVO.setDescription(productOcrPO.getDescriptionRussian());
+            productVO.setFamily(productOcrPO.getDescriptionRussian());
+        }
     }
 
 
@@ -192,13 +195,13 @@ public class ProductManager {
      * @param productVOS
      * @return
      */
-    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit){
+    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit,String language){
             List<SearchImageResponse.Auction> auctions = new ArrayList<>();
             if (auctionsList.size() > limit){
                 auctions = auctionsList.subList(0, limit);
-                productVOS = convert(auctions);
+                productVOS = convert(auctions,language);
             }else {
-                productVOS = convert(auctionsList);
+                productVOS = convert(auctionsList,language);
             }
         return productVOS;
     }
@@ -208,7 +211,7 @@ public class ProductManager {
      * @param auctions
      * @return
      */
-    private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions){
+    private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions,String language){
         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
         List<ProductVO> productVOS = new ArrayList<>();
         for (SearchImageResponse.Auction auction: auctions) {
@@ -226,25 +229,27 @@ public class ProductManager {
                 }
                 if (productVO1 != null){
                     String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
-                    productVO.setBrand(productVO1.getBrand());
-                    productVO.setBrandChinese(productVO1.getBrandChinese());
-                    productVO.setBrandPortuguese(productVO1.getBrandPortuguese());
-                    productVO.setBrandRussian(productVO1.getBrandRussian());
-
-                    productVO.setCategory(productVO1.getCategory());
-                    productVO.setCategoryChinese(productVO1.getCategoryChinese());
-                    productVO.setCategoryPortuguese(productVO1.getCategoryPortuguese());
-                    productVO.setCategoryRussian(productVO1.getCategoryRussian());
-
-                    productVO.setDescription(productVO1.getDescription());
-                    productVO.setDescriptionChinese(productVO1.getDescriptionChinese());
-                    productVO.setDescriptionPortuguese(productVO1.getDescriptionPortuguese());
-                    productVO.setDescriptionRussian(productVO1.getDescriptionRussian());
-
-                    productVO.setFamily(productVO1.getFamily());
-                    productVO.setFamilyChinese(productVO1.getFamilyChinese());
-                    productVO.setFamilyPortuguese(productVO1.getDescriptionPortuguese());
-                    productVO.setFamilyRussian(productVO1.getDescriptionRussian());
+                    if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrand());
+                        productVO.setCategory(productVO1.getCategory());
+                        productVO.setDescription(productVO1.getDescription());
+                        productVO.setFamily(productVO1.getFamily());
+                    }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandChinese());
+                        productVO.setCategory(productVO1.getCategoryChinese());
+                        productVO.setDescription(productVO1.getDescriptionChinese());
+                        productVO.setFamily(productVO1.getFamilyChinese());
+                    }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandPortuguese());
+                        productVO.setCategory(productVO1.getCategoryPortuguese());
+                        productVO.setDescription(productVO1.getDescriptionPortuguese());
+                        productVO.setFamily(productVO1.getDescriptionPortuguese());
+                    }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandRussian());
+                        productVO.setCategory(productVO1.getCategoryRussian());
+                        productVO.setDescription(productVO1.getDescriptionRussian());
+                        productVO.setFamily(productVO1.getDescriptionRussian());
+                    }
                     productVO.setUrl(url);
                     productVOS.add(productVO);
                 }

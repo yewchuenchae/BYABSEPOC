@@ -32,7 +32,7 @@ public class ProductService {
      * @param multipartFile
      * @return
      */
-    public Result listProductsBySearch(MultipartFile multipartFile){
+    public Result listProductsBySearch(MultipartFile multipartFile,String language){
         List<ProductVO> productVOS = null;
         try {
             if (multipartFile == null){
@@ -47,7 +47,7 @@ public class ProductService {
             MultipartFile[] multipartFiles = new MultipartFile[1];
             multipartFiles[0] = multipartFile;
             MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
-            productVOS = productManager.listProductsBySearch(result[0]);
+            productVOS = productManager.listProductsBySearch(result[0],language);
         } catch (BizException e){
             return new Result(e.getCode(), e.getMessage());
         }  catch (Exception e) {

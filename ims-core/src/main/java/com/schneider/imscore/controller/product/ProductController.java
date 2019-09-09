@@ -25,10 +25,10 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping("/product/search")
-    public Result listProductsBySearch(HttpServletRequest request){
+    public Result listProductsBySearch(HttpServletRequest request,String language){
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
-        return productService.listProductsBySearch(file);
+        return productService.listProductsBySearch(file,language);
     }
 
     @PostMapping("/product/search/add")
