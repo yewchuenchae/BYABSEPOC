@@ -94,11 +94,11 @@ public class ProductManager {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
         List<String> textOcr = imageOcr(multipartFile);
+        log.info("ocr返回结果{}",textOcr.toString());
         // 过滤长度大于等于7的
         List<String> ocr = textOcr.stream().filter(item -> item.length()>= 7).collect(Collectors.toList());
         // 过滤特殊字符
         List<String> text = StringOperationUtil.replaceSpecialChar(ocr);
-        log.info("ocr返回结果{}",text.toString());
         // 2.图片搜索
         SearchImageResponse response = imageSearch(multipartFile);
         if (response != null){
@@ -352,9 +352,6 @@ public class ProductManager {
         // 参数初始化
         ImageSyncScanRequest imageSyncScanRequest = imageOcrInit(multipartFile);
 
-        // ocr 返回结果集合
-        List<String> ocrResults = new ArrayList<>();
-
         HttpResponse httpResponse = null;
 
         try {
@@ -365,6 +362,17 @@ public class ProductManager {
         }
 
         //服务端接收到请求，并完成处理返回的结果
+        return ocrResponse(httpResponse);
+    }
+
+    /**
+     * ocr结果解析
+     * @param httpResponse
+     * @return
+     * @throws BizException
+     */
+    private List<String> ocrResponse(HttpResponse httpResponse) throws BizException{
+        List<String> ocrResults = new ArrayList<>();
         if (httpResponse != null && httpResponse.isSuccess()) {
             JSONObject scrResponse = JSON.parseObject(org.apache.commons.codec.binary.StringUtils.newStringUtf8(httpResponse.getHttpContent()));
             int requestCode = scrResponse.getIntValue("code");
