@@ -179,12 +179,12 @@ public class ProductManager {
             productVO.setBrand(productOcrPO.getBrandPortuguese());
             productVO.setCategory(productOcrPO.getCategoryPortuguese());
             productVO.setDescription(productOcrPO.getDescriptionPortuguese());
-            productVO.setFamily(productOcrPO.getDescriptionPortuguese());
+            productVO.setFamily(productOcrPO.getFamilyPortuguese());
         }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrandRussian());
             productVO.setCategory(productOcrPO.getCategoryRussian());
             productVO.setDescription(productOcrPO.getDescriptionRussian());
-            productVO.setFamily(productOcrPO.getDescriptionRussian());
+            productVO.setFamily(productOcrPO.getFamilyRussian());
         }
     }
 
@@ -243,12 +243,12 @@ public class ProductManager {
                         productVO.setBrand(productVO1.getBrandPortuguese());
                         productVO.setCategory(productVO1.getCategoryPortuguese());
                         productVO.setDescription(productVO1.getDescriptionPortuguese());
-                        productVO.setFamily(productVO1.getDescriptionPortuguese());
+                        productVO.setFamily(productVO1.getFamilyPortuguese());
                     }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrandRussian());
                         productVO.setCategory(productVO1.getCategoryRussian());
                         productVO.setDescription(productVO1.getDescriptionRussian());
-                        productVO.setFamily(productVO1.getDescriptionRussian());
+                        productVO.setFamily(productVO1.getFamilyRussian());
                     }
                     productVO.setUrl(url);
                     productVOS.add(productVO);

@@ -1,5 +1,7 @@
 package com.schneider.imscore.util;
 
+import com.schneider.imscore.resp.ResultCode;
+import com.schneider.imscore.resp.exception.BizException;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.lang.StringUtils;
@@ -37,7 +39,7 @@ public class ImageSizeUtil {
      * @param params
      * @return
      */
-    public static int getImageLengthOfSide(MultipartFile params){
+    public static int getImageLengthOfSide(MultipartFile params) throws BizException {
         int lengthSize = 3000;
         Map<String, Integer> result = new HashMap<>();
         // 获取图片格式
@@ -49,10 +51,15 @@ public class ImageSizeUtil {
             reader.setInput(iis, true);
             result.put("width",reader.getWidth(0));
             result.put("height",reader.getHeight(0));
-            if(reader.getWidth(0) > reader.getHeight(0)){
-                lengthSize = reader.getWidth(0);
+            int width = reader.getWidth(0);
+            int height = reader.getHeight(0);
+            if (width < 200 || height < 200){
+                throw new BizException(ResultCode.UNSUPPORTED_PIC_PIXELS);
+            }
+            if(width > height){
+                lengthSize = width;
             }else{
-                lengthSize = reader.getHeight(0);
+                lengthSize = height;
             }
         } catch (IOException e) {
             log.error("图片压缩失败，suffixName :{}",suffixName,e);
@@ -73,7 +80,6 @@ public class ImageSizeUtil {
         // 图片后缀
         String suffixName = originalFilename.substring(
                 originalFilename.lastIndexOf(".")).toLowerCase();
-        log.info("suffixName后缀"+suffixName);
         if(suffixName.indexOf("png")>0){
             result = "png";
         }else if(suffixName.indexOf("jpg")>0){
@@ -91,7 +97,6 @@ public class ImageSizeUtil {
      * 根据指定大小压缩图片
      *
      * @param imageBytes  源图片字节数组
-     * @param desFileSize 指定图片大小，单位kb
      * @return 压缩质量后的图片字节数组
      */
     public static byte[] compressPicForScale(byte[] imageBytes,int imageLengthSize) {
