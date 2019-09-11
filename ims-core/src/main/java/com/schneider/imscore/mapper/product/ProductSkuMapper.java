@@ -32,4 +32,11 @@ public interface ProductSkuMapper {
      * @return
      */
     List<ProductSkuPO> listProductsLikeSku(@Param("references") List<String> references);
+
+    /**
+     * 根据ocr模糊查询说明
+     * @param ocr
+     * @return
+     */
+    List<ProductSkuPO> selectProductLikeDescription(String ocr);
 }

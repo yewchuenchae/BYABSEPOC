@@ -42,12 +42,7 @@ public class ProductService {
             if (!ImageSizeUtil.checkSuffix( multipartFile.getOriginalFilename())){
                 return new Result(ResultCode.ILLEGAL_PARAM.getCode(),ResultCode.ILLEGAL_PARAM.getDesc());
             }
-
-            // 图片压缩
-            MultipartFile[] multipartFiles = new MultipartFile[1];
-            multipartFiles[0] = multipartFile;
-            MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
-            productVOS = productManager.listProductsBySearch(result[0],language);
+            productVOS = productManager.listProductsBySearch(multipartFile,language);
         } catch (BizException e){
             return new Result(e.getCode(), e.getMessage());
         }  catch (Exception e) {

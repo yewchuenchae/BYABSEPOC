@@ -28,7 +28,7 @@ import com.schneider.imscore.resp.exception.BizException;
 import com.schneider.imscore.util.AliyunOSSClientUtil;
 import com.schneider.imscore.util.DateUtils;
 import com.schneider.imscore.util.FileUtil;
-import com.schneider.imscore.util.StringOperationUtil;
+import com.schneider.imscore.util.ImageSizeUtil;
 import com.schneider.imscore.vo.product.ProductVO;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import lombok.extern.slf4j.Slf4j;
@@ -94,12 +94,14 @@ public class ProductManager {
     public List<ProductVO> listProductsBySearch(MultipartFile multipartFile,String language) throws BizException {
         List<ProductVO> productVOS = new ArrayList<>();
        // 1.图片ocr
-        List<String> textOcr = imageOcr(multipartFile);
-        log.info("ocr返回结果{}",textOcr.toString());
-        // 过滤长度大于等于7的
-        List<String> ocr = textOcr.stream().filter(item -> item.length()>= 7).collect(Collectors.toList());
-        // 过滤特殊字符
-        List<String> text = StringOperationUtil.replaceSpecialChar(ocr);
+        List<String> text = imageOcr(multipartFile);
+        log.info("ocr返回结果{}",text.toString());
+
+        MultipartFile[] multipartFiles = new MultipartFile[1];
+        multipartFiles[0] = multipartFile;
+        MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
+        multipartFile = result[0];
+
         // 2.图片搜索
         SearchImageResponse response = imageSearch(multipartFile);
         if (response != null){
@@ -107,8 +109,7 @@ public class ProductManager {
             if (!CollectionUtils.isEmpty(auctions)){
                 if (!CollectionUtils.isEmpty(text)){
                     // ocr的结果去数据库查询 查到：合并   查不到：返回图搜
-                    List<ProductSkuPO> productSkuPOs = new ArrayList<>();
-                     productSkuPOs = productSkuMapper.listProductsBySku(text);
+                    List<ProductSkuPO>  productSkuPOs = productSkuMapper.listProductsBySku(text);
                     List<String> productIds = new ArrayList<>();
                     if (CollectionUtils.isEmpty(productSkuPOs)){
                         for (String str: text) {
@@ -123,9 +124,36 @@ public class ProductManager {
                     }
                     // ocr在库中没有查到 则模糊查询
                     if (CollectionUtils.isEmpty(productSkuPOs)){
-                        productSkuPOs = productSkuMapper.listProductsLikeSku(text);
-                        if (productSkuPOs .size() > 1){
-                            productSkuPOs = null;
+                        List<String> ocr = text.stream().filter(item -> item.length()>= 7).collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(ocr)){
+                            productSkuPOs = productSkuMapper.listProductsLikeSku(ocr);
+                            if (productSkuPOs .size() > 1){
+                                productSkuPOs = new ArrayList<>();
+                            }
+                        }
+                    }
+                    // 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
+                        boolean flag = false;
+                        int number = 0;
+                        for (int i = 0; i < text.size(); i++) {
+                            String str = text.get(i);
+                            productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
+                            if (!CollectionUtils.isEmpty(productSkuPOs)){
+                                flag = true;
+                                number = i;
+                                break;
+                            }
+                        }
+                        // 以数据库查到的数据为基准，过滤含有ocr的结果
+                        if (flag){
+                            for (int i = number +1; i < text.size(); i++) {
+                                String firstOcr = text.get(i);
+                                List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescription().contains(firstOcr)).collect(Collectors.toList());
+                                if (!CollectionUtils.isEmpty(collect)){
+                                    productSkuPOs = collect;
+                                }
+                            }
                         }
                     }
 
@@ -133,21 +161,28 @@ public class ProductManager {
                     if (CollectionUtils.isEmpty(productSkuPOs)){
                         productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
                     }else {
-                        // ocr结果查到了
-                        productVOS = productVOList(auctions, productVOS,4,language);
-                        ProductVO productVO = new ProductVO();
-                        ProductSkuPO productOcrPO = productSkuPOs.get(0);
-                        // 初始化
-                        init(productVO,productOcrPO,language);
-
+                        int size = productSkuPOs.size();
                         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
-                        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
-                        productVO.setUrl(url);
-
-                        productVOS.add(productVO);
-                        productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
-
-                        Collections.swap(productVOS, productVOS.size()-1, 0);
+                        // 返回5条ocr查询的数据
+                        if (size >= IMAGE_SEARCH_RESULT_LIMIT){
+                                for (int i = 0; i < IMAGE_SEARCH_RESULT_LIMIT; i++) {
+                                   ProductSkuPO productSkuPO = productSkuPOs.get(i);
+                                   ProductVO productVO = new ProductVO();
+                                   init(productVO,productSkuPO,language,ossClient);
+                                   productVOS.add(productVO);
+                            }
+                        //   图搜结果 + ocr结果
+                        }else {
+                            for (int i = 0; i < size; i++) {
+                                ProductSkuPO productSkuPO = productSkuPOs.get(i);
+                                ProductVO productVO = new ProductVO();
+                                init(productVO,productSkuPO,language,ossClient);
+                                productVOS.add(productVO);
+                            }
+                            List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size, language);
+                            productVOS.addAll(vos);
+                            productVOS = removeDuplicateContain(productVOS);
+                        }
                     }
                 }else {
                     productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
@@ -159,11 +194,28 @@ public class ProductManager {
     }
 
     /**
+     * 利用list.contain() 去重
+     * @param list
+     * @return
+     */
+    public  <T> List<T> removeDuplicateContain(List<T> list){
+        List<T> listTemp = new ArrayList<>();
+        for (T aList : list) {
+            if (!listTemp.contains(aList)) {
+                listTemp.add(aList);
+            }
+        }
+        return listTemp;
+    }
+
+
+
+    /**
      * 多语言赋值
      * @param productVO
      * @param productOcrPO
      */
-    private void init(ProductVO productVO ,ProductSkuPO productOcrPO,String language){
+    private void init(ProductVO productVO ,ProductSkuPO productOcrPO,String language,OSSClient ossClient){
         productVO.setProductId(productOcrPO.getReference());
         if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrand());
@@ -186,6 +238,8 @@ public class ProductManager {
             productVO.setDescription(productOcrPO.getDescriptionRussian());
             productVO.setFamily(productOcrPO.getFamilyRussian());
         }
+        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
+        productVO.setUrl(url);
     }
 
 
