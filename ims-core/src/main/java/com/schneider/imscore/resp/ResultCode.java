@@ -11,8 +11,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ResultCode {
-
+    /**
+     * SUCCESS 编码
+     */
     SUCCESS("200", "SUCCESS"),
+    /**
+     * FAILED 编码
+     */
     FAILED("500", "FAILED"),
 
     // 未上传图片

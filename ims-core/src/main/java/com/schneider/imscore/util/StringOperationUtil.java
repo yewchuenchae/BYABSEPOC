@@ -19,9 +19,13 @@ import java.util.regex.Pattern;
  */
 public class StringOperationUtil {
 
-    // 需要转义的特殊字符
+    /**
+     * 需要转义的特殊字符
+     */
     private static final String[] SEARCHSTR = {"\"", "\\\"", "\\", "\\\\"};
-    // 转移后的字符串
+    /**
+     * 转义后的字符串
+      */
     private static final String[] REPLACEMENT = {"%20#", "%21#", "%22#", "%23#"};
 
     /**

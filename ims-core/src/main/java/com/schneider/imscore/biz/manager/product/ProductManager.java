@@ -110,14 +110,9 @@ public class ProductManager {
                 if (!CollectionUtils.isEmpty(text)){
                     // ocr的结果去数据库查询 查到：合并   查不到：返回图搜
                     List<ProductSkuPO>  productSkuPOs = productSkuMapper.listProductsBySku(text);
-                    List<String> productIds = new ArrayList<>();
                     if (CollectionUtils.isEmpty(productSkuPOs)){
-                        for (String str: text) {
-                            if (str.contains("O")){
-                                String o = str.replaceAll("O", "0");
-                                productIds.add(o);
-                            }
-                        }
+                        // O替换成0
+                        List<String> productIds = doSpecialOcr(text);
                         if (!CollectionUtils.isEmpty(productIds)){
                             productSkuPOs = productSkuMapper.listProductsBySku(productIds);
                         }
@@ -133,29 +128,7 @@ public class ProductManager {
                         }
                     }
                     // 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
-                    if (CollectionUtils.isEmpty(productSkuPOs)){
-                        boolean flag = false;
-                        int number = 0;
-                        for (int i = 0; i < text.size(); i++) {
-                            String str = text.get(i);
-                            productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
-                            if (!CollectionUtils.isEmpty(productSkuPOs)){
-                                flag = true;
-                                number = i;
-                                break;
-                            }
-                        }
-                        // 以数据库查到的数据为基准，过滤含有ocr的结果
-                        if (flag){
-                            for (int i = number +1; i < text.size(); i++) {
-                                String firstOcr = text.get(i);
-                                List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescription().contains(firstOcr)).collect(Collectors.toList());
-                                if (!CollectionUtils.isEmpty(collect)){
-                                    productSkuPOs = collect;
-                                }
-                            }
-                        }
-                    }
+                    productSkuPOs = fuzzySearch(productSkuPOs, text);
 
                     // ocr 结果未查到
                     if (CollectionUtils.isEmpty(productSkuPOs)){
@@ -194,11 +167,62 @@ public class ProductManager {
     }
 
     /**
+     * ocr结果含有O替换成0
+     * @param text
+     * @return
+     */
+    private List<String> doSpecialOcr(List<String> text){
+        List<String> productIds = new ArrayList<>();
+        for (String str: text) {
+            if (str.contains("O")){
+                String o = str.replaceAll("O", "0");
+                productIds.add(o);
+            }
+        }
+        return productIds;
+    }
+
+
+    /**
+     * 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
+     * @param productSkuPOs
+     * @param text
+     * @return
+     */
+    private List<ProductSkuPO>  fuzzySearch(List<ProductSkuPO>  productSkuPOs,List<String> text){
+        if (CollectionUtils.isEmpty(productSkuPOs)){
+            boolean flag = false;
+            int number = 0;
+            for (int i = 0; i < text.size(); i++) {
+                String str = text.get(i);
+                productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
+                if (!CollectionUtils.isEmpty(productSkuPOs)){
+                    flag = true;
+                    number = i;
+                    break;
+                }
+            }
+            // 以数据库查到的数据为基准，过滤含有ocr的结果
+            if (flag){
+                for (int i = number +1; i < text.size(); i++) {
+                    String firstOcr = text.get(i);
+                    List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescription().contains(firstOcr)).collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(collect)){
+                        productSkuPOs = collect;
+                    }
+                }
+            }
+        }
+        return productSkuPOs;
+    }
+
+
+    /**
      * 利用list.contain() 去重
      * @param list
      * @return
      */
-    public  <T> List<T> removeDuplicateContain(List<T> list){
+    private   <T> List<T> removeDuplicateContain(List<T> list){
         List<T> listTemp = new ArrayList<>();
         for (T aList : list) {
             if (!listTemp.contains(aList)) {

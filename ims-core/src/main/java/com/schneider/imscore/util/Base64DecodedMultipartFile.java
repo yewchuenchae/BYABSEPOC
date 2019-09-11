@@ -9,11 +9,11 @@ import java.io.*;
  * @createDate 2019/08/28 16:52
  * @Description
  */
-public  class BASE64DecodedMultipartFile implements MultipartFile {
+public  class Base64DecodedMultipartFile implements MultipartFile {
     private final byte[] imgContent;
     private final String header;
 
-    public BASE64DecodedMultipartFile(byte[] imgContent, String header) {
+    public Base64DecodedMultipartFile(byte[] imgContent, String header) {
         this.imgContent = imgContent;
         this.header = header.split(";")[0];
     }

@@ -14,5 +14,9 @@ import java.util.List;
  */
 public interface SampleUserMapper {
 
+    /**
+     * 示例
+     * @return
+     */
     List<SampleUserPO> list();
 }

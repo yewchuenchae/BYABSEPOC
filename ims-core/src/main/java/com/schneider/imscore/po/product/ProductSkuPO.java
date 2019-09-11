@@ -4,6 +4,11 @@ import lombok.Data;
 
 import java.util.Date;
 
+/**
+ * @author liyuan
+ * @version : ProductSkuPO.java, v 0.1 2019/08/25 15:35 by Exp $$
+ * @Description 产品skuPO
+ */
 @Data
 public class ProductSkuPO {
     private Long id;

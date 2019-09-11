@@ -41,7 +41,7 @@ public class ImageSizeUtil {
      */
     public static int getImageLengthOfSide(MultipartFile params) throws BizException {
         int lengthSize = 3000;
-        Map<String, Integer> result = new HashMap<>();
+        Map<String, Integer> result = new HashMap<>(5);
         // 获取图片格式
         String suffixName = getSuffixNameInfo(params);
         try {
@@ -146,7 +146,7 @@ public class ImageSizeUtil {
                 }
             }
 
-            return new BASE64DecodedMultipartFile(b, baseStrs[0]);
+            return new Base64DecodedMultipartFile(b, baseStrs[0]);
         } catch (IOException e) {
             log.error("图片压缩失败",e);
             return null;
