@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
+import static com.schneider.imscore.constant.Constant.SUCCESS_CODE;
 
 
 /**
@@ -86,10 +87,10 @@ public class ProductManager {
 
     /**
      * 图片搜索
+     * @param language
      * @param multipartFile
      * @return
      * @throws BizException
-     * @throws ClientException
      */
     public List<ProductVO> listProductsBySearch(MultipartFile multipartFile,String language) throws BizException {
         List<ProductVO> productVOS = new ArrayList<>();
@@ -461,13 +462,13 @@ public class ProductManager {
             int requestCode = scrResponse.getIntValue("code");
             //每一张图片的检测结果
             JSONArray taskResults = scrResponse.getJSONArray("data");
-            if (200 == requestCode) {
+            if (SUCCESS_CODE == requestCode) {
                 for (Object taskResult : taskResults) {
                     //单张图片的处理结果
                     int taskCode = ((JSONObject) taskResult).getIntValue("code");
                     //图片要检测的场景的处理结果, 如果是多个场景，则会有每个场景的结果
                     JSONArray sceneResults = ((JSONObject) taskResult).getJSONArray("results");
-                    if (200 == taskCode) {
+                    if (SUCCESS_CODE == taskCode) {
                         for (Object sceneResult : sceneResults) {
                             String scene = ((JSONObject) sceneResult).getString("scene");
                             String suggestion = ((JSONObject) sceneResult).getString("suggestion");

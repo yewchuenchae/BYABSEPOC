@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import static com.schneider.imscore.constant.Constant.*;
 
 /**
  * @author liyuan
@@ -53,7 +54,7 @@ public class ImageSizeUtil {
             result.put("height",reader.getHeight(0));
             int width = reader.getWidth(0);
             int height = reader.getHeight(0);
-            if (width < 200 || height < 200){
+            if (width < LOWEST_PIXEL || height < LOWEST_PIXEL){
                 throw new BizException(ResultCode.UNSUPPORTED_PIC_PIXELS);
             }
             if(width > height){
@@ -80,12 +81,12 @@ public class ImageSizeUtil {
         // 图片后缀
         String suffixName = originalFilename.substring(
                 originalFilename.lastIndexOf(".")).toLowerCase();
-        if(suffixName.indexOf("png")>0){
-            result = "png";
-        }else if(suffixName.indexOf("jpg")>0){
-            result = "jpg";
-        }else if (suffixName.indexOf("jpeg")>0){
-            result = "jpg";
+        if(suffixName.indexOf(IMAGE_FORMAT_PNG)>0){
+            result = IMAGE_FORMAT_PNG;
+        }else if(suffixName.indexOf(IMAGE_FORMAT_JPG)>0){
+            result = IMAGE_FORMAT_JPG;
+        }else if (suffixName.indexOf(IMAGE_FORMAT_JPEG)>0){
+            result = IMAGE_FORMAT_JPG;
         }
 
         return result;
@@ -164,7 +165,7 @@ public class ImageSizeUtil {
         int imageLengthSize = ImageSizeUtil.getImageLengthOfSide(fileImg[0]);
         Long swd = fileImg[0].getSize();
         // 像素大于1024 或 大于2M
-        if(imageLengthSize > 1024 || swd > 2097152){
+        if(imageLengthSize > HIGHEST_PIXEL || swd > HIGHEST_FILE_SIZE){
             BASE64Encoder encoder = new BASE64Encoder();
             String imgData1 = null;
             try {
