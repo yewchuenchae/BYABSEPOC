@@ -29,6 +29,7 @@ import com.schneider.imscore.util.AliyunOSSClientUtil;
 import com.schneider.imscore.util.DateUtils;
 import com.schneider.imscore.util.FileUtil;
 import com.schneider.imscore.util.ImageSizeUtil;
+import com.schneider.imscore.vo.product.Product;
 import com.schneider.imscore.vo.product.ProductVO;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,6 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
 import static com.schneider.imscore.constant.Constant.SUCCESS_CODE;
 
@@ -93,18 +93,32 @@ public class ProductManager {
      * @throws BizException
      */
     public List<ProductVO> listProductsBySearch(MultipartFile multipartFile,String language) throws BizException {
-        List<ProductVO> productVOS = new ArrayList<>();
-       // 1.图片ocr
+
+       // 图片ocr
         List<String> text = imageOcr(multipartFile);
         log.info("ocr返回结果{}",text.toString());
 
+        // 图片压缩
         MultipartFile[] multipartFiles = new MultipartFile[1];
         multipartFiles[0] = multipartFile;
         MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
         multipartFile = result[0];
 
-        // 2.图片搜索
+        // 图搜
         SearchImageResponse response = imageSearch(multipartFile);
+        // 图搜和ocr结果解析
+        return  responseResult(response, text, language);
+    }
+
+    /**
+     * 结果解析
+     * @param response
+     * @param text
+     * @param language
+     * @return
+     */
+    private List<ProductVO> responseResult(SearchImageResponse response, List<String> text,String language){
+        List<ProductVO> productVOS = new ArrayList<>();
         if (response != null){
             List<SearchImageResponse.Auction> auctions = response.getAuctions();
             if (!CollectionUtils.isEmpty(auctions)){
@@ -139,13 +153,13 @@ public class ProductManager {
                         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
                         // 返回5条ocr查询的数据
                         if (size >= IMAGE_SEARCH_RESULT_LIMIT){
-                                for (int i = 0; i < IMAGE_SEARCH_RESULT_LIMIT; i++) {
-                                   ProductSkuPO productSkuPO = productSkuPOs.get(i);
-                                   ProductVO productVO = new ProductVO();
-                                   init(productVO,productSkuPO,language,ossClient);
-                                   productVOS.add(productVO);
+                            for (int i = 0; i < IMAGE_SEARCH_RESULT_LIMIT; i++) {
+                                ProductSkuPO productSkuPO = productSkuPOs.get(i);
+                                ProductVO productVO = new ProductVO();
+                                init(productVO,productSkuPO,language,ossClient);
+                                productVOS.add(productVO);
                             }
-                        //   图搜结果 + ocr结果
+                            //   图搜结果 + ocr结果
                         }else {
                             for (int i = 0; i < size; i++) {
                                 ProductSkuPO productSkuPO = productSkuPOs.get(i);
@@ -163,7 +177,6 @@ public class ProductManager {
                 }
             }
         }
-        // 3.返回搜索结果列表
         return productVOS;
     }
 
@@ -234,11 +247,12 @@ public class ProductManager {
     }
 
 
-
     /**
      * 多语言赋值
      * @param productVO
      * @param productOcrPO
+     * @param language
+     * @param ossClient
      */
     private void init(ProductVO productVO ,ProductSkuPO productOcrPO,String language,OSSClient ossClient){
         productVO.setProductId(productOcrPO.getReference());
@@ -272,6 +286,8 @@ public class ProductManager {
      * 直接返回图搜结果集（5条）
      * @param auctionsList
      * @param productVOS
+     * @param limit
+     * @param language
      * @return
      */
     private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit,String language){
@@ -288,6 +304,7 @@ public class ProductManager {
     /**
      * 转换
      * @param auctions
+     * @param language
      * @return
      */
     private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions,String language){
@@ -338,12 +355,11 @@ public class ProductManager {
     }
 
 
-
     /**
      * 图像搜索
      * @param multipartFile
      * @return
-     * @throws Exception
+     * @throws BizException
      */
     private SearchImageResponse imageSearch(MultipartFile multipartFile) throws BizException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
@@ -378,8 +394,10 @@ public class ProductManager {
     }
 
     /**
-     * ocr 参数初始化
+     * 参数初始化
+     * @param multipartFile
      * @return
+     * @throws BizException
      */
     private  ImageSyncScanRequest imageOcrInit(MultipartFile multipartFile) throws BizException{
         ImageSyncScanRequest imageSyncScanRequest = new ImageSyncScanRequest();
@@ -392,16 +410,9 @@ public class ProductManager {
         // ocr
         httpBody.put("scenes", Arrays.asList("ocr"));
 
-        String url = null;
-        try {
-            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
-            String dateStr = DateUtils.format(Calendar.getInstance().getTime(),
-                    "yyyyMMddHHmmssSSSS");
-            String key = MessageFormat.format("ocr/{0}{1}", dateStr + "/", multipartFile.getOriginalFilename());
-            url = aliyunOSSClientUtil.uploadFile(ossClient, multipartFile.getInputStream(), key);
-        } catch (IOException e) {
-            throw new  BizException(ResultCode.OSS_UPLOAD_ERROR);
-        }
+        // 上传图片oss
+        Map<String, String> ocr = uploadPicture(multipartFile, "ocr");
+        String url = ocr.get("url");
 
         JSONObject task = new JSONObject();
         task.put("dataId", UUID.randomUUID().toString());
@@ -422,11 +433,34 @@ public class ProductManager {
         return imageSyncScanRequest;
     }
 
+    /**
+     * 上传图片
+     * @param multipartFile
+     * @return
+     * @throws BizException
+     */
+    private Map<String,String> uploadPicture(MultipartFile multipartFile,String name) throws BizException{
+        try {
+            Map<String,String> map = new HashMap<>(2);
+            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+            String dateStr = DateUtils.format(Calendar.getInstance().getTime(),
+                    "yyyyMMddHHmmssSSSS");
+            String key = MessageFormat.format(name+"/{0}{1}", dateStr + "/", multipartFile.getOriginalFilename());
+           String url = aliyunOSSClientUtil.uploadFile(ossClient, multipartFile.getInputStream(), key);
+           map.put("key",key);
+           map.put("url",url);
+           return map;
+        } catch (IOException e) {
+            log.error("oss上传失败",e);
+            throw new  BizException(ResultCode.OSS_UPLOAD_ERROR);
+        }
+    }
+
 
     /**
      * 图片ocr
      * @param multipartFile
-     * @throws Exception
+     * @throws BizException
      */
     private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
         IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
@@ -490,9 +524,7 @@ public class ProductManager {
                     }
                 }
             } else {
-                /**
-                 * 表明请求整体处理失败，原因视具体的情况详细分析
-                 */
+                //表明请求整体处理失败，原因视具体的情况详细分析
                 log.error("ocr:the whole image scan request failed. response:{}",JSON.toJSONString(scrResponse));
                 throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
             }
@@ -504,11 +536,11 @@ public class ProductManager {
     }
 
     /**
-     * 新增图搜
+     * 新增图搜照片
      * @param productReqData
      * @param multipartFile
      * @return
-     * @throws ClientException
+     * @throws BizException
      */
     @Transactional(rollbackFor = {Exception.class, BizException.class})
     public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile)throws BizException {
@@ -522,23 +554,39 @@ public class ProductManager {
         // 必填，商品id，最多支持 512个字符。
         request.setProductId(productReqData.getProductId());
 
-        // 2. 如果多次添加图片具有相同的ProductId + PicName，以最后一次添加为准，前面添加的的图片将被覆盖。
+        // 如果多次添加图片具有相同的ProductId + PicName，以最后一次添加为准，前面添加的的图片将被覆盖。
         request.setPicName(multipartFile.getOriginalFilename());
-        // 2. 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
+        // 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
         request.setCategoryId(88888888);
         // 图片的base64编码
         String encodePicContent = FileUtil.multipartFileToBase64(multipartFile);
-        request.setPicContent(encodePicContent);
         // 必填，图片内容，Base64编码。
         request.setPicContent(encodePicContent);
 
         // 选填，用户自定义的内容，最多支持 4096个字符。
-
-        ProductSkuPO productSkuPO = new ProductSkuPO();
+        Product productSkuPO = new Product();
         productSkuPO.setBrand(productReqData.getBrand());
+        productSkuPO.setBrandChinese(productReqData.getBrandChinese());
+        productSkuPO.setBrandPortuguese(productReqData.getBrandPortuguese());
+        productSkuPO.setBrandRussian(productReqData.getBrandRussian());
+
         productSkuPO.setDescription(productReqData.getDescription());
+        productSkuPO.setDescriptionChinese(productReqData.getDescriptionChinese());
+        productSkuPO.setDescriptionPortuguese(productReqData.getDescriptionPortuguese());
+        productSkuPO.setDescriptionRussian(productReqData.getDescriptionRussian());
+
         productSkuPO.setCategory(productReqData.getCategory());
+        productSkuPO.setCategoryChinese(productReqData.getCategoryChinese());
+        productSkuPO.setCategoryPortuguese(productReqData.getCategoryPortuguese());
+        productSkuPO.setCategoryRussian(productReqData.getCategoryRussian());
+
         productSkuPO.setFamily(productReqData.getFamily());
+        productSkuPO.setFamilyChinese(productReqData.getFamilyChinese());
+        productSkuPO.setFamilyPortuguese(productReqData.getFamilyPortuguese());
+        productSkuPO.setFamilyRussian(productReqData.getFamilyRussian());
+
+        Map<String, String> newPicture = uploadPicture(multipartFile, "newPicture");
+        productSkuPO.setKey(newPicture.get("key"));
 
         request.setCustomContent(JSON.toJSONString(productSkuPO));
         AddImageResponse acsResponse = null;

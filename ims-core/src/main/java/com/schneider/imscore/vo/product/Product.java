@@ -1,39 +1,46 @@
-package com.schneider.imscore.vo.product.req;
+package com.schneider.imscore.vo.product;
 
 import lombok.Data;
 
-import java.io.Serializable;
-
 /**
  * @author liyuan
- * @createDate 2019/08/26 13:39
+ * @createDate 2019/08/23 10:05
  * @Description
  */
 @Data
-public class ProductReqData implements Serializable {
-
-    private static final long serialVersionUID = 9152843176736649224L;
-
-    /**sku*/
-    private String productId;
-    /**品牌*/
+public class Product {
     private String brand;
+
     private String brandChinese;
+
     private String brandPortuguese;
+
     private String brandRussian;
-    /**种族*/
+
     private String family;
+
     private String familyChinese;
+
     private String familyPortuguese;
+
     private String familyRussian;
-    /**类别*/
+
     private String category;
+
     private String categoryChinese;
+
     private String categoryPortuguese;
+
     private String categoryRussian;
-    /**说明*/
+
     private String description;
+
     private String descriptionChinese;
+
     private String descriptionPortuguese;
+
     private String descriptionRussian;
+
+    private String key;
+
 }

@@ -8,7 +8,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -107,7 +106,6 @@ public class ImageSizeUtil {
         double accuracy = 0.5;
         double v = imageLengthSize;
         try {
-
             do {
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream(imageBytes.length);
@@ -118,7 +116,6 @@ public class ImageSizeUtil {
                 imageBytes = outputStream.toByteArray();
                 v = v * accuracy;
             }while (v>1024);
-
         } catch (Exception e) {
             log.error("【图片压缩】msg=图片压缩失败!", e);
         }
