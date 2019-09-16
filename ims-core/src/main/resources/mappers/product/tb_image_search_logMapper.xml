@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.schneider.imscore.mapper.product.ImageSearchLogMapper" >
+  <resultMap id="BaseResultMap" type="com.schneider.imscore.po.product.ImageSearchLogPO" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="ip_address" property="ipAddress" jdbcType="VARCHAR" />
+    <result column="ocr_time" property="ocrTime" jdbcType="INTEGER" />
+    <result column="image_search_time" property="imageSearchTime" jdbcType="INTEGER" />
+    <result column="whole_api_time" property="wholeApiTime" jdbcType="INTEGER" />
+    <result column="ocr_result" property="ocrResult" jdbcType="VARCHAR" />
+    <result column="creator" property="creator" jdbcType="VARCHAR" />
+    <result column="modifier" property="modifier" jdbcType="VARCHAR" />
+    <result column="created" property="created" jdbcType="TIMESTAMP" />
+    <result column="modified" property="modified" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Table_Name">
+     tb_image_search_log
+  </sql>
+
+  <sql id="Base_Column_List" >
+    id, ip_address, ocr_time, image_search_time, whole_api_time, ocr_result, creator, 
+    modifier, created, modified
+  </sql>
+
+  <insert id="saveImageSearchLog" parameterType="com.schneider.imscore.po.product.ImageSearchLogPO" >
+    insert into tb_image_search_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="ipAddress != null" >
+        ip_address,
+      </if>
+      <if test="ocrTime != null" >
+        ocr_time,
+      </if>
+      <if test="imageSearchTime != null" >
+        image_search_time,
+      </if>
+      <if test="wholeApiTime != null" >
+        whole_api_time,
+      </if>
+      <if test="ocrResult != null" >
+        ocr_result,
+      </if>
+      <if test="creator != null" >
+        creator,
+      </if>
+      <if test="modifier != null" >
+        modifier,
+      </if>
+      <if test="created != null" >
+        created,
+      </if>
+      <if test="modified != null" >
+        modified,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="ipAddress != null" >
+        #{ipAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="ocrTime != null" >
+        #{ocrTime,jdbcType=INTEGER},
+      </if>
+      <if test="imageSearchTime != null" >
+        #{imageSearchTime,jdbcType=INTEGER},
+      </if>
+      <if test="wholeApiTime != null" >
+        #{wholeApiTime,jdbcType=INTEGER},
+      </if>
+      <if test="ocrResult != null" >
+        #{ocrResult,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null" >
+        #{creator,jdbcType=VARCHAR},
+      </if>
+      <if test="modifier != null" >
+        #{modifier,jdbcType=VARCHAR},
+      </if>
+      <if test="created != null" >
+        #{created,jdbcType=TIMESTAMP},
+      </if>
+      <if test="modified != null" >
+        #{modified,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+
+  <select id="selectImageSearchLog" resultType="com.schneider.imscore.vo.log.ImageSearchLogVO">
+    select
+    sum(whole_api_time) as wholeApiTime , count(whole_api_time) as requestCount
+    from <include refid="Table_Name"/>
+  </select>
+
+</mapper>

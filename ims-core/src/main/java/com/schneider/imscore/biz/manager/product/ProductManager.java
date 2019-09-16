@@ -20,15 +20,14 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import com.schneider.imscore.enums.LanguageEnum;
 import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
+import com.schneider.imscore.mapper.product.ImageSearchLogMapper;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
 import com.schneider.imscore.po.product.ImageSearchAddPO;
+import com.schneider.imscore.po.product.ImageSearchLogPO;
 import com.schneider.imscore.po.product.ProductSkuPO;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
-import com.schneider.imscore.util.AliyunOSSClientUtil;
-import com.schneider.imscore.util.DateUtils;
-import com.schneider.imscore.util.FileUtil;
-import com.schneider.imscore.util.ImageSizeUtil;
+import com.schneider.imscore.util.*;
 import com.schneider.imscore.vo.product.Product;
 import com.schneider.imscore.vo.product.ProductVO;
 import com.schneider.imscore.vo.product.req.ProductReqData;
@@ -40,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -84,6 +85,9 @@ public class ProductManager {
     @Autowired
     private ImageSearchAddMapper imageSearchAddMapper;
 
+    @Autowired
+    private ImageSearchLogMapper imageSearchLogMapper;
+
 
     /**
      * 图片搜索
@@ -92,11 +96,17 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile,String language) throws BizException {
-
-       // 图片ocr
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request) throws BizException {
+        long ocrStart = System.currentTimeMillis();
+        // 图片ocr
         List<String> text = imageOcr(multipartFile);
-        log.info("ocr返回结果{}",text.toString());
+        long ocrEnd = System.currentTimeMillis();
+        int ocrTime = (int) (ocrEnd - ocrStart);
+        String jsonOcr = JSON.toJSONString(text);
+        log.info("ocr返回结果{}",jsonOcr);
+
+        // 获取ip地址
+        String ipAddress = IpUtil.getIpAddress(request);
 
         // 图片压缩
         MultipartFile[] multipartFiles = new MultipartFile[1];
@@ -105,10 +115,42 @@ public class ProductManager {
         multipartFile = result[0];
 
         // 图搜
+        long imageSearchStart = System.currentTimeMillis();
         SearchImageResponse response = imageSearch(multipartFile);
+        long imageSearchEnd = System.currentTimeMillis();
+        int imageSearchTime = (int)(imageSearchEnd - imageSearchStart);
+
         // 图搜和ocr结果解析
-        return  responseResult(response, text, language);
+        List<ProductVO> productVOS = responseResult(response, text, language);
+
+        // 接口整体调用时长
+        long endTime = System.currentTimeMillis();
+        int wholeTime = (int) (endTime - ocrStart);
+        // 监控日志
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime);
+        return  productVOS;
     }
+
+    /**
+     * 记录接口调用情况
+     * @param ocrTime
+     * @param imageSearchTime
+     * @param ipAddress
+     * @param ocrResult
+     * @param wholeApiTime
+     */
+    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime){
+        ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
+        imageSearchLogPO.setIpAddress(ipAddress);
+        imageSearchLogPO.setOcrTime(ocrTime);
+        imageSearchLogPO.setImageSearchTime(imageSearchTime);
+        imageSearchLogPO.setWholeApiTime(wholeApiTime);
+        imageSearchLogPO.setOcrResult(ocrResult);
+        imageSearchLogPO.setCreated(new Date());
+        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
+    }
+
+
 
     /**
      * 结果解析
@@ -129,6 +171,7 @@ public class ProductManager {
                         // O替换成0
                         List<String> productIds = doSpecialOcr(text);
                         if (!CollectionUtils.isEmpty(productIds)){
+                            // ocr结果数据库中精准匹配
                             productSkuPOs = productSkuMapper.listProductsBySku(productIds);
                         }
                     }
@@ -436,6 +479,7 @@ public class ProductManager {
     /**
      * 上传图片
      * @param multipartFile
+     * @param name
      * @return
      * @throws BizException
      */

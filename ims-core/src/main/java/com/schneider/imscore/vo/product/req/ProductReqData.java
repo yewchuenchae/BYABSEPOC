@@ -21,7 +21,7 @@ public class ProductReqData implements Serializable {
     private String brandChinese;
     private String brandPortuguese;
     private String brandRussian;
-    /**种族*/
+    /**种类*/
     private String family;
     private String familyChinese;
     private String familyPortuguese;
