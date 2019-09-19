@@ -291,6 +291,19 @@ public class ProductManager {
 
 
     /**
+     * 说明中去除brand family category
+     * @param brand
+     * @param family
+     * @param category
+     * @param description
+     * @return
+     */
+    public String doSpecialDescription(String brand ,String family, String category,String description){
+        return description.replaceAll(brand+ " ", "").replaceAll(family+ " ", "").replaceAll(category+ " ", "");
+    }
+
+
+    /**
      * 多语言赋值
      * @param productVO
      * @param productOcrPO
@@ -302,22 +315,30 @@ public class ProductManager {
         if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrand());
             productVO.setCategory(productOcrPO.getCategory());
-            productVO.setDescription(productOcrPO.getDescription());
+            String description = doSpecialDescription(productOcrPO.getBrand(), productOcrPO.getFamily(),
+                    productOcrPO.getCategory(), productOcrPO.getDescription());
+            productVO.setDescription(description);
             productVO.setFamily(productOcrPO.getFamily());
         }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrandChinese());
             productVO.setCategory(productOcrPO.getCategoryChinese());
-            productVO.setDescription(productOcrPO.getDescriptionChinese());
+            String description = doSpecialDescription(productOcrPO.getBrandChinese(), productOcrPO.getFamilyChinese(),
+                    productOcrPO.getCategoryChinese(), productOcrPO.getDescriptionChinese());
+            productVO.setDescription(description);
             productVO.setFamily(productOcrPO.getFamilyChinese());
         }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrandPortuguese());
             productVO.setCategory(productOcrPO.getCategoryPortuguese());
-            productVO.setDescription(productOcrPO.getDescriptionPortuguese());
+            String description = doSpecialDescription(productOcrPO.getBrandPortuguese(), productOcrPO.getFamilyPortuguese(),
+                    productOcrPO.getCategoryPortuguese(), productOcrPO.getDescriptionPortuguese());
+            productVO.setDescription(description);
             productVO.setFamily(productOcrPO.getFamilyPortuguese());
         }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
             productVO.setBrand(productOcrPO.getBrandRussian());
             productVO.setCategory(productOcrPO.getCategoryRussian());
-            productVO.setDescription(productOcrPO.getDescriptionRussian());
+            String description = doSpecialDescription(productOcrPO.getBrandRussian(), productOcrPO.getFamilyRussian(),
+                    productOcrPO.getCategoryRussian(), productOcrPO.getDescriptionRussian());
+            productVO.setDescription(description);
             productVO.setFamily(productOcrPO.getFamilyRussian());
         }
         String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
@@ -371,23 +392,31 @@ public class ProductManager {
                     if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrand());
                         productVO.setCategory(productVO1.getCategory());
-                        productVO.setDescription(productVO1.getDescription());
                         productVO.setFamily(productVO1.getFamily());
+                        String description = doSpecialDescription(productVO1.getBrand(), productVO1.getFamily(),
+                                productVO1.getCategory(), productVO1.getDescription());
+                        productVO.setDescription(description);
                     }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrandChinese());
                         productVO.setCategory(productVO1.getCategoryChinese());
-                        productVO.setDescription(productVO1.getDescriptionChinese());
                         productVO.setFamily(productVO1.getFamilyChinese());
+                        String description = doSpecialDescription(productVO1.getBrandChinese(), productVO1.getFamilyChinese(),
+                                productVO1.getCategoryChinese(), productVO1.getDescriptionChinese());
+                        productVO.setDescription(description);
                     }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrandPortuguese());
                         productVO.setCategory(productVO1.getCategoryPortuguese());
-                        productVO.setDescription(productVO1.getDescriptionPortuguese());
                         productVO.setFamily(productVO1.getFamilyPortuguese());
+                        String description = doSpecialDescription(productVO1.getBrandPortuguese(), productVO1.getFamilyPortuguese(),
+                                productVO1.getCategoryPortuguese(), productVO1.getDescriptionPortuguese());
+                        productVO.setDescription(description);
                     }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrandRussian());
                         productVO.setCategory(productVO1.getCategoryRussian());
-                        productVO.setDescription(productVO1.getDescriptionRussian());
                         productVO.setFamily(productVO1.getFamilyRussian());
+                        String description = doSpecialDescription(productVO1.getBrandRussian(), productVO1.getFamilyRussian(),
+                                productVO1.getCategoryRussian(), productVO1.getDescriptionRussian());
+                        productVO.setDescription(description);
                     }
                     productVO.setUrl(url);
                     productVOS.add(productVO);
@@ -653,6 +682,23 @@ public class ProductManager {
         imageSearchAddPO.setModified(new Date());
         imageSearchAddMapper.saveImageSearch(imageSearchAddPO);
         return  acsResponse;
+    }
+
+    /**
+     * 模糊查询产品
+     * @param productReqData
+     * @return
+     */
+    public List<ProductVO> searchProductBySkuOrCategory(ProductReqData productReqData){
+        List<ProductVO> productVOS = new ArrayList<>();
+        List<ProductSkuPO> productSkuPOS = productSkuMapper.selectProductLikeSkuOrCategory(productReqData);
+        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+        for (ProductSkuPO productSkuPO : productSkuPOS) {
+            ProductVO productVO = new ProductVO();
+            init(productVO,productSkuPO,productReqData.getLanguage(),ossClient);
+            productVOS.add(productVO);
+        }
+        return productVOS;
     }
 
 

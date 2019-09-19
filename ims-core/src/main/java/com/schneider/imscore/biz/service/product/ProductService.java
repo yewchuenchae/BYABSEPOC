@@ -97,4 +97,20 @@ public class ProductService {
         }
         return Result.buildSuccess(imageSearchLogVO);
     }
+
+    /**
+     * 模糊搜索产品
+     * @param productReqData
+     * @return
+     */
+    public Result listProductsFuzzySearch(ProductReqData productReqData){
+        List<ProductVO> productVOS = null;
+        try {
+            productVOS = productManager.searchProductBySkuOrCategory(productReqData);
+        }  catch (Exception e) {
+            log.error("产品模糊搜索失败",e);
+            return new Result<>(ResultCode.FAILED.getCode(),ResultCode.FAILED.getDesc());
+        }
+        return Result.buildSuccess(productVOS);
+    }
 }

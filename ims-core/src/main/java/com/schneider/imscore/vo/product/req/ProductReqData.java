@@ -36,4 +36,8 @@ public class ProductReqData implements Serializable {
     private String descriptionChinese;
     private String descriptionPortuguese;
     private String descriptionRussian;
+    /**搜索条件*/
+    private String searchCriteria;
+    /**语言*/
+    private String language;
 }

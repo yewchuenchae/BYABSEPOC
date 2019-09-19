@@ -25,6 +25,12 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    /**
+     * 图搜
+     * @param request
+     * @param language
+     * @return
+     */
     @PostMapping("/product/search")
     public Result listProductsBySearch(HttpServletRequest request,String language){
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
@@ -32,6 +38,12 @@ public class ProductController {
         return productService.listProductsBySearch(file,language,request);
     }
 
+    /**
+     * 新增图搜图片
+     * @param request
+     * @param productReqData
+     * @return
+     */
     @PostMapping("/product/search/add")
     public Result addImageSearch(HttpServletRequest request, ProductReqData productReqData){
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
@@ -39,8 +51,22 @@ public class ProductController {
         return productService.saveImageSearch(productReqData,file);
     }
 
+    /**
+     * 日志展示
+     * @return
+     */
     @GetMapping("/product/search/log")
     public Result getLog(){
         return productService.getLog();
+    }
+
+    /**
+     * 模糊查询产品
+     * @param productReqData
+     * @return
+     */
+    @GetMapping("/product/search/fuzzy")
+    public Result listProductsFuzzySearch(ProductReqData productReqData){
+        return productService.listProductsFuzzySearch(productReqData);
     }
 }

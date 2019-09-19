@@ -39,8 +39,6 @@ public class ProductSkuPO {
 
     private String categoryRussian;
 
-    private String descriptionOcr;
-
     private String description;
 
     private String descriptionChinese;

@@ -1,6 +1,7 @@
 package com.schneider.imscore.mapper.product;
 
 import com.schneider.imscore.po.product.ProductSkuPO;
+import com.schneider.imscore.vo.product.req.ProductReqData;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -39,4 +40,11 @@ public interface ProductSkuMapper {
      * @return
      */
     List<ProductSkuPO> selectProductLikeDescription(String ocr);
+
+    /**
+     * 根据类别和
+     * @param productReqData
+     * @return
+     */
+    List<ProductSkuPO> selectProductLikeSkuOrCategory(ProductReqData productReqData);
 }
