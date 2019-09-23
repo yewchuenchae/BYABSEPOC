@@ -38,7 +38,7 @@ public class ProductService {
      * @param multipartFile
      * @return
      */
-    public Result listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest httpServletRequest,String date){
+    public Result listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest httpServletRequest){
 
         List<ProductVO> productVOS = null;
         try {
@@ -49,7 +49,7 @@ public class ProductService {
             if (!ImageSizeUtil.checkSuffix( multipartFile.getOriginalFilename())){
                 return new Result(ResultCode.ILLEGAL_PARAM.getCode(),ResultCode.ILLEGAL_PARAM.getDesc());
             }
-            productVOS = productManager.listProductsBySearch(multipartFile,language,httpServletRequest,date);
+            productVOS = productManager.listProductsBySearch(multipartFile,language,httpServletRequest);
         } catch (BizException e){
             return new Result(e.getCode(), e.getMessage());
         }  catch (Exception e) {

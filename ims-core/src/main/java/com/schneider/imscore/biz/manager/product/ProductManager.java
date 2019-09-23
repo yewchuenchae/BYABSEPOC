@@ -95,7 +95,7 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,String date) throws BizException {
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request) throws BizException {
         long ocrStart = System.currentTimeMillis();
         // 图片ocr
         List<String> text = imageOcr(multipartFile);
@@ -125,13 +125,8 @@ public class ProductManager {
         // 接口整体调用时长
         long endTime = System.currentTimeMillis();
         int wholeTime = (int) (endTime - ocrStart);
-        int second = 0;
-        if (!StringUtils.isEmpty(date)){
-            Date now = DateUtils.parse(date, DateUtils.YYYYMMDDHHMMSS);
-             second = DateUtils.getIntvalSecond(now, new Date());
-        }
         // 监控日志
-        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,second);
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime);
         return  productVOS;
     }
 
@@ -143,14 +138,13 @@ public class ProductManager {
      * @param ocrResult
      * @param wholeApiTime
      */
-    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime,int responseTime){
+    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime){
         ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
         imageSearchLogPO.setIpAddress(ipAddress);
         imageSearchLogPO.setOcrTime(ocrTime);
         imageSearchLogPO.setImageSearchTime(imageSearchTime);
         imageSearchLogPO.setWholeApiTime(wholeApiTime);
         imageSearchLogPO.setOcrResult(ocrResult);
-        imageSearchLogPO.setResponseTime(responseTime);
         imageSearchLogPO.setCreated(new Date());
         imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }

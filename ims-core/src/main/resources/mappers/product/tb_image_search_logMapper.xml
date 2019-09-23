@@ -7,7 +7,6 @@
     <result column="ocr_time" property="ocrTime" jdbcType="INTEGER" />
     <result column="image_search_time" property="imageSearchTime" jdbcType="INTEGER" />
     <result column="whole_api_time" property="wholeApiTime" jdbcType="INTEGER" />
-    <result column="response_time" property="responseTime" jdbcType="INTEGER" />
     <result column="ocr_result" property="ocrResult" jdbcType="VARCHAR" />
     <result column="creator" property="creator" jdbcType="VARCHAR" />
     <result column="modifier" property="modifier" jdbcType="VARCHAR" />
@@ -19,7 +18,7 @@
   </sql>
 
   <sql id="Base_Column_List" >
-    id, ip_address, ocr_time, image_search_time, whole_api_time,response_time ,ocr_result, creator,
+    id, ip_address, ocr_time, image_search_time, whole_api_time ,ocr_result, creator,
     modifier, created, modified
   </sql>
 
@@ -40,9 +39,6 @@
       </if>
       <if test="wholeApiTime != null" >
         whole_api_time,
-      </if>
-      <if test="responseTime != null" >
-        response_time,
       </if>
       <if test="ocrResult != null" >
         ocr_result,
@@ -75,9 +71,6 @@
       </if>
       <if test="wholeApiTime != null" >
         #{wholeApiTime,jdbcType=INTEGER},
-      </if>
-      <if test="responseTime != null" >
-        #{responseTime,jdbcType=INTEGER},
       </if>
       <if test="ocrResult != null" >
         #{ocrResult,jdbcType=VARCHAR},
