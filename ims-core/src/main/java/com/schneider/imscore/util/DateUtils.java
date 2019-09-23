@@ -240,7 +240,7 @@ public class DateUtils {
 
         long l = currentime.getTime() - sourcetime.getTime();
 
-        return (int) l / 1000;
+        return (int) l;
 
     }
 

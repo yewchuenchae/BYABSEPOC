@@ -21,6 +21,8 @@ public class ImageSearchLogPO {
 
     private Integer wholeApiTime;
 
+    private Integer responseTime;
+
     private String ocrResult;
 
     private String creator;

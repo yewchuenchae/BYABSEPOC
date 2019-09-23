@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -96,7 +95,7 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request) throws BizException {
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,String date) throws BizException {
         long ocrStart = System.currentTimeMillis();
         // 图片ocr
         List<String> text = imageOcr(multipartFile);
@@ -114,8 +113,8 @@ public class ProductManager {
         MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
         multipartFile = result[0];
 
-        // 图搜
         long imageSearchStart = System.currentTimeMillis();
+        // 图搜
         SearchImageResponse response = imageSearch(multipartFile);
         long imageSearchEnd = System.currentTimeMillis();
         int imageSearchTime = (int)(imageSearchEnd - imageSearchStart);
@@ -126,8 +125,13 @@ public class ProductManager {
         // 接口整体调用时长
         long endTime = System.currentTimeMillis();
         int wholeTime = (int) (endTime - ocrStart);
+        int second = 0;
+        if (!StringUtils.isEmpty(date)){
+            Date now = DateUtils.parse(date, DateUtils.YYYYMMDDHHMMSS);
+             second = DateUtils.getIntvalSecond(now, new Date());
+        }
         // 监控日志
-        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime);
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,second);
         return  productVOS;
     }
 
@@ -139,13 +143,14 @@ public class ProductManager {
      * @param ocrResult
      * @param wholeApiTime
      */
-    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime){
+    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime,int responseTime){
         ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
         imageSearchLogPO.setIpAddress(ipAddress);
         imageSearchLogPO.setOcrTime(ocrTime);
         imageSearchLogPO.setImageSearchTime(imageSearchTime);
         imageSearchLogPO.setWholeApiTime(wholeApiTime);
         imageSearchLogPO.setOcrResult(ocrResult);
+        imageSearchLogPO.setResponseTime(responseTime);
         imageSearchLogPO.setCreated(new Date());
         imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }
@@ -388,7 +393,10 @@ public class ProductManager {
                     continue;
                 }
                 if (productVO1 != null){
-                    String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
+                    if (!StringUtils.isEmpty(productVO1.getKey())){
+                        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
+                        productVO.setUrl(url);
+                    }
                     if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
                         productVO.setBrand(productVO1.getBrand());
                         productVO.setCategory(productVO1.getCategory());
@@ -418,7 +426,6 @@ public class ProductManager {
                                 productVO1.getCategoryRussian(), productVO1.getDescriptionRussian());
                         productVO.setDescription(description);
                     }
-                    productVO.setUrl(url);
                     productVOS.add(productVO);
                 }
             }
