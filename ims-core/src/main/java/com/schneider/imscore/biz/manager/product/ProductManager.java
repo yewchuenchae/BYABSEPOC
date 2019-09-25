@@ -95,8 +95,7 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request) throws BizException {
-        long ocrStart = System.currentTimeMillis();
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,Long ocrStart) throws BizException {
         // 图片ocr
         List<String> text = imageOcr(multipartFile);
         long ocrEnd = System.currentTimeMillis();
@@ -240,7 +239,7 @@ public class ProductManager {
 
 
     /**
-     * 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
+     * 查询出来的ocr结果逐一去数据库中description字段模糊查询 直到查询到数据
      * @param productSkuPOs
      * @param text
      * @return
