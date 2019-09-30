@@ -690,6 +690,7 @@ public class ProductManager {
      * @return
      */
     public List<ProductVO> searchProductBySkuOrCategory(ProductReqData productReqData){
+        productReqData.setSearchCriteria(StringOperationUtil.sqlReplace(productReqData.getSearchCriteria()));
         List<ProductVO> productVOS = new ArrayList<>();
         List<ProductSkuPO> productSkuPOS = productSkuMapper.selectProductLikeSkuOrCategory(productReqData);
         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
