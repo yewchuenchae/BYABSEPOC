@@ -4,6 +4,7 @@
   <resultMap id="BaseResultMap" type="com.schneider.imscore.po.product.ImageSearchLogPO" >
     <id column="id" property="id" jdbcType="BIGINT" />
     <result column="ip_address" property="ipAddress" jdbcType="VARCHAR" />
+    <result column="country" property="country" jdbcType="VARCHAR" />
     <result column="ocr_time" property="ocrTime" jdbcType="INTEGER" />
     <result column="image_search_time" property="imageSearchTime" jdbcType="INTEGER" />
     <result column="whole_api_time" property="wholeApiTime" jdbcType="INTEGER" />
@@ -18,7 +19,7 @@
   </sql>
 
   <sql id="Base_Column_List" >
-    id, ip_address, ocr_time, image_search_time, whole_api_time ,ocr_result, creator,
+    id, ip_address,country, ocr_time, image_search_time, whole_api_time ,ocr_result, creator,
     modifier, created, modified
   </sql>
 
@@ -30,6 +31,9 @@
       </if>
       <if test="ipAddress != null" >
         ip_address,
+      </if>
+      <if test="country != null" >
+        country,
       </if>
       <if test="ocrTime != null" >
         ocr_time,
@@ -62,6 +66,9 @@
       </if>
       <if test="ipAddress != null" >
         #{ipAddress,jdbcType=VARCHAR},
+      </if>
+      <if test="country != null" >
+        #{country,jdbcType=VARCHAR},
       </if>
       <if test="ocrTime != null" >
         #{ocrTime,jdbcType=INTEGER},

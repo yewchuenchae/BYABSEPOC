@@ -105,7 +105,7 @@ public class ProductManager {
 
         // 获取ip地址
         String ipAddress = IpUtil.getIpAddress(request);
-
+        String country = Geoip2Util.getCountryByIp(ipAddress);
         // 图片压缩
         MultipartFile[] multipartFiles = new MultipartFile[1];
         multipartFiles[0] = multipartFile;
@@ -125,7 +125,7 @@ public class ProductManager {
         long endTime = System.currentTimeMillis();
         int wholeTime = (int) (endTime - ocrStart);
         // 监控日志
-        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime);
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country);
         return  productVOS;
     }
 
@@ -137,7 +137,8 @@ public class ProductManager {
      * @param ocrResult
      * @param wholeApiTime
      */
-    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime){
+    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime,
+                                    String country){
         ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
         imageSearchLogPO.setIpAddress(ipAddress);
         imageSearchLogPO.setOcrTime(ocrTime);
@@ -145,6 +146,7 @@ public class ProductManager {
         imageSearchLogPO.setWholeApiTime(wholeApiTime);
         imageSearchLogPO.setOcrResult(ocrResult);
         imageSearchLogPO.setCreated(new Date());
+        imageSearchLogPO.setCountry(country);
         imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }
 

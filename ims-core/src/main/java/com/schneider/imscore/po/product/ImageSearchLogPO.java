@@ -15,6 +15,8 @@ public class ImageSearchLogPO {
 
     private String ipAddress;
 
+    private String country;
+
     private Integer ocrTime;
 
     private Integer imageSearchTime;
