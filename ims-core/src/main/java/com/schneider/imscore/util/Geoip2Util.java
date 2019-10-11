@@ -6,8 +6,7 @@ import com.maxmind.geoip2.record.Country;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.core.io.ClassPathResource;
-
-import java.io.File;
+import java.io.InputStream;
 import java.net.InetAddress;
 
 /**
@@ -29,8 +28,8 @@ public class Geoip2Util {
         String name = "";
         ClassPathResource resource = new ClassPathResource("/GeoLite2-Country.mmdb");
         try {
-            File file = resource.getFile();
-            DatabaseReader reader = new DatabaseReader.Builder(file).build();
+           InputStream inputStream = resource.getInputStream();
+            DatabaseReader reader = new DatabaseReader.Builder(inputStream).build();
             InetAddress ipAddress = InetAddress.getByName(ip);
             CountryResponse country = reader.country(ipAddress);
             Country country1 = country.getCountry();
