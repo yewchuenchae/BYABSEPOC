@@ -28,7 +28,7 @@ public class FileUtil {
             BASE64Encoder base64Encoder =new BASE64Encoder();
             base64EncoderImg = base64Encoder.encode(file.getBytes());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.info("MultipartFile转Base64失败",e);
         }
         return base64EncoderImg.replaceAll("[\\s*\t\n\r]", "");
     }

@@ -47,4 +47,17 @@ public interface ProductSkuMapper {
      * @return
      */
     List<ProductSkuPO> selectProductLikeSkuOrCategory(ProductReqData productReqData);
+
+    /**
+     * 更新
+     * @param productSkuPO
+     * @return
+     */
+    int update(ProductSkuPO productSkuPO);
+
+    /**
+     * 查询所有产品
+     * @return
+     */
+    List<ProductSkuPO> selectAllProducts();
 }

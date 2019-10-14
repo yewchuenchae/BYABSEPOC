@@ -246,7 +246,7 @@ public class ProductManager {
      * @param text
      * @return
      */
-    private List<ProductSkuPO>  fuzzySearch(List<ProductSkuPO>  productSkuPOs,List<String> text){
+    private List<ProductSkuPO> fuzzySearch(List<ProductSkuPO>  productSkuPOs,List<String> text){
         if (CollectionUtils.isEmpty(productSkuPOs)){
             boolean flag = false;
             int number = 0;
@@ -263,7 +263,7 @@ public class ProductManager {
             if (flag){
                 for (int i = number +1; i < text.size(); i++) {
                     String firstOcr = text.get(i);
-                    List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescription().contains(firstOcr)).collect(Collectors.toList());
+                    List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescriptionOcr().contains(firstOcr)).collect(Collectors.toList());
                     if (!CollectionUtils.isEmpty(collect)){
                         productSkuPOs = collect;
                     }

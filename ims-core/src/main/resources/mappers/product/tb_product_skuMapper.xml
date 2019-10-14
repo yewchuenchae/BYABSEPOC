@@ -16,6 +16,7 @@
       <result column="category_chinese" property="categoryChinese" jdbcType="VARCHAR" />
       <result column="category_portuguese" property="categoryPortuguese" jdbcType="VARCHAR" />
       <result column="category_russian" property="categoryRussian" jdbcType="VARCHAR" />
+      <result column="description_ocr" property="descriptionOcr" jdbcType="VARCHAR" />
       <result column="description" property="description" jdbcType="VARCHAR" />
       <result column="description_chinese" property="descriptionChinese" jdbcType="VARCHAR" />
       <result column="description_portuguese" property="descriptionPortuguese" jdbcType="VARCHAR" />
@@ -34,7 +35,7 @@
   <sql id="Base_Column_List" >
     id, reference, brand, brand_chinese, brand_portuguese, brand_russian, family, family_chinese,
     family_portuguese, family_russian, category, category_chinese, category_portuguese,
-    category_russian ,description, description_chinese, description_portuguese, description_russian,
+    category_russian,description_ocr ,description, description_chinese, description_portuguese, description_russian,
     oss_key, creator, modifier, created, modified
   </sql>
   <select id="selectProductByReference" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -70,7 +71,7 @@
         select
         <include refid="Base_Column_List" />
         from <include refid="Table_Name"/>
-        where description like binary  CONCAT('%',#{ocr,jdbcType=VARCHAR},'%')
+        where description_ocr like binary  CONCAT('%',#{ocr,jdbcType=VARCHAR},'%')
     </select>
 
     <select id="selectProductLikeSkuOrCategory" resultMap="BaseResultMap" parameterType="com.schneider.imscore.vo.product.req.ProductReqData" >
@@ -96,6 +97,22 @@
             </if>
         </where>
         limit 0,5
+    </select>
+
+    <update id="update" parameterType="com.schneider.imscore.po.product.ProductSkuPO" >
+        update tb_product_sku
+        <set >
+            <if test="descriptionOcr != null" >
+                description_ocr = #{descriptionOcr,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where reference = #{reference,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectAllProducts" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from <include refid="Table_Name"/>
     </select>
 
 </mapper>
