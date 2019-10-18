@@ -115,4 +115,151 @@
         from <include refid="Table_Name"/>
     </select>
 
+    <insert id="insertSelective" parameterType="com.schneider.imscore.po.product.ProductSkuPO" >
+        insert into <include refid="Table_Name"/>
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                id,
+            </if>
+            <if test="reference != null" >
+                reference,
+            </if>
+            <if test="brand != null" >
+                brand,
+            </if>
+            <if test="brandChinese != null" >
+                brand_chinese,
+            </if>
+            <if test="brandPortuguese != null" >
+                brand_portuguese,
+            </if>
+            <if test="brandRussian != null" >
+                brand_russian,
+            </if>
+            <if test="family != null" >
+                family,
+            </if>
+            <if test="familyChinese != null" >
+                family_chinese,
+            </if>
+            <if test="familyPortuguese != null" >
+                family_portuguese,
+            </if>
+            <if test="familyRussian != null" >
+                family_russian,
+            </if>
+            <if test="category != null" >
+                category,
+            </if>
+            <if test="categoryChinese != null" >
+                category_chinese,
+            </if>
+            <if test="categoryPortuguese != null" >
+                category_portuguese,
+            </if>
+            <if test="categoryRussian != null" >
+                category_russian,
+            </if>
+            <if test="description != null" >
+                description,
+            </if>
+            <if test="descriptionChinese != null" >
+                description_chinese,
+            </if>
+            <if test="descriptionPortuguese != null" >
+                description_portuguese,
+            </if>
+            <if test="descriptionRussian != null" >
+                description_russian,
+            </if>
+            <if test="ossKey != null" >
+                oss_key,
+            </if>
+            <if test="creator != null" >
+                creator,
+            </if>
+            <if test="modifier != null" >
+                modifier,
+            </if>
+            <if test="created != null" >
+                created,
+            </if>
+            <if test="modified != null" >
+                modified,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id,jdbcType=BIGINT},
+            </if>
+            <if test="reference != null" >
+                #{reference,jdbcType=VARCHAR},
+            </if>
+            <if test="brand != null" >
+                #{brand,jdbcType=VARCHAR},
+            </if>
+            <if test="brandChinese != null" >
+                #{brandChinese,jdbcType=VARCHAR},
+            </if>
+            <if test="brandPortuguese != null" >
+                #{brandPortuguese,jdbcType=VARCHAR},
+            </if>
+            <if test="brandRussian != null" >
+                #{brandRussian,jdbcType=VARCHAR},
+            </if>
+            <if test="family != null" >
+                #{family,jdbcType=VARCHAR},
+            </if>
+            <if test="familyChinese != null" >
+                #{familyChinese,jdbcType=VARCHAR},
+            </if>
+            <if test="familyPortuguese != null" >
+                #{familyPortuguese,jdbcType=VARCHAR},
+            </if>
+            <if test="familyRussian != null" >
+                #{familyRussian,jdbcType=VARCHAR},
+            </if>
+            <if test="category != null" >
+                #{category,jdbcType=VARCHAR},
+            </if>
+            <if test="categoryChinese != null" >
+                #{categoryChinese,jdbcType=VARCHAR},
+            </if>
+            <if test="categoryPortuguese != null" >
+                #{categoryPortuguese,jdbcType=VARCHAR},
+            </if>
+            <if test="categoryRussian != null" >
+                #{categoryRussian,jdbcType=VARCHAR},
+            </if>
+            <if test="description != null" >
+                #{description,jdbcType=VARCHAR},
+            </if>
+            <if test="descriptionChinese != null" >
+                #{descriptionChinese,jdbcType=VARCHAR},
+            </if>
+            <if test="descriptionPortuguese != null" >
+                #{descriptionPortuguese,jdbcType=VARCHAR},
+            </if>
+            <if test="descriptionRussian != null" >
+                #{descriptionRussian,jdbcType=VARCHAR},
+            </if>
+            <if test="ossKey != null" >
+                #{ossKey,jdbcType=VARCHAR},
+            </if>
+            <if test="creator != null" >
+                #{creator,jdbcType=VARCHAR},
+            </if>
+            <if test="modifier != null" >
+                #{modifier,jdbcType=VARCHAR},
+            </if>
+            <if test="created != null" >
+                #{created,jdbcType=TIMESTAMP},
+            </if>
+            <if test="modified != null" >
+                #{modified,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+
+
 </mapper>

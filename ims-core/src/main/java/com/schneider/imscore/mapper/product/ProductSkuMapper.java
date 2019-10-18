@@ -42,7 +42,7 @@ public interface ProductSkuMapper {
     List<ProductSkuPO> selectProductLikeDescription(String ocr);
 
     /**
-     * 根据类别和
+     * 根据类别和sku模糊查询
      * @param productReqData
      * @return
      */
@@ -60,4 +60,11 @@ public interface ProductSkuMapper {
      * @return
      */
     List<ProductSkuPO> selectAllProducts();
+
+    /**
+     * 新增产品
+     * @param productSkuPO
+     * @return
+     */
+    int insertSelective(ProductSkuPO productSkuPO);
 }

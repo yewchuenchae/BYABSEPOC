@@ -22,9 +22,11 @@ import com.schneider.imscore.enums.LanguageEnum;
 import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
 import com.schneider.imscore.mapper.product.ImageSearchLogMapper;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
+import com.schneider.imscore.mapper.product.SkuMatchingMapper;
 import com.schneider.imscore.po.product.ImageSearchAddPO;
 import com.schneider.imscore.po.product.ImageSearchLogPO;
 import com.schneider.imscore.po.product.ProductSkuPO;
+import com.schneider.imscore.po.product.SkuMatchingPO;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
 import com.schneider.imscore.util.*;
@@ -46,6 +48,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
 import static com.schneider.imscore.constant.Constant.SUCCESS_CODE;
+import static java.util.stream.Collectors.toList;
 
 
 /**
@@ -87,6 +90,8 @@ public class ProductManager {
     @Autowired
     private ImageSearchLogMapper imageSearchLogMapper;
 
+    @Autowired
+    private SkuMatchingMapper skuMatchingMapper;
 
     /**
      * 图片搜索
@@ -299,7 +304,14 @@ public class ProductManager {
      * @return
      */
     public String doSpecialDescription(String brand ,String family, String category,String description){
-        return description.replaceAll(brand+ " ", "").replaceAll(family+ " ", "").replaceAll(category+ " ", "");
+        if (!StringUtils.isEmpty(brand)&&
+        !StringUtils.isEmpty(family)&&
+        !StringUtils.isEmpty(category)&&
+        !StringUtils.isEmpty(description)){
+            return description.replaceAll(brand+ " ", "").replaceAll(family+ " ", "").replaceAll(category+ " ", "");
+        }else {
+            return description;
+        }
     }
 
 
@@ -687,23 +699,46 @@ public class ProductManager {
     }
 
     /**
-     * 模糊查询产品
+     * 查询产品
      * @param productReqData
      * @return
      */
     public List<ProductVO> searchProductBySkuOrCategory(ProductReqData productReqData){
+        List<ProductSkuPO> productSkuPOS = new ArrayList<>();
         productReqData.setSearchCriteria(StringOperationUtil.sqlReplace(productReqData.getSearchCriteria()));
         List<ProductVO> productVOS = new ArrayList<>();
-        List<ProductSkuPO> productSkuPOS = productSkuMapper.selectProductLikeSkuOrCategory(productReqData);
-        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
-        for (ProductSkuPO productSkuPO : productSkuPOS) {
-            ProductVO productVO = new ProductVO();
-            init(productVO,productSkuPO,productReqData.getLanguage(),ossClient);
-            productVOS.add(productVO);
+        ProductSkuPO skuPO = productSkuMapper.selectProductByReference(productReqData.getSearchCriteria());
+        // 通过sku查询产品
+        if (skuPO != null){
+            productSkuPOS.add(skuPO);
+            // 非施耐德产品
+            if (StringUtils.isEmpty(skuPO.getOssKey())){
+                // 通过非施耐德sku查询施耐德产品列表
+                productSkuPOS = listsNonSeProduct(productReqData.getSearchCriteria(),productSkuPOS);
+            }
+            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+            for (ProductSkuPO productSkuPO : productSkuPOS) {
+                ProductVO productVO = new ProductVO();
+                init(productVO,productSkuPO,productReqData.getLanguage(),ossClient);
+                productVOS.add(productVO);
+            }
         }
         return productVOS;
     }
 
-
-
+    /**
+     * 通过非施耐德sku查询施耐德产品列表
+     * @param sku
+     * @param productSkuPOS
+     * @return
+     */
+    private List<ProductSkuPO> listsNonSeProduct(String sku,List<ProductSkuPO> productSkuPOS){
+        List<SkuMatchingPO> skuMatchingPOS = skuMatchingMapper.selectMatchByCompetitorSku(sku);
+        if (!CollectionUtils.isEmpty(skuMatchingPOS)){
+            List<String> skuList = skuMatchingPOS.stream().map(SkuMatchingPO::getSchneiderElectricSku).collect(toList());
+            List<ProductSkuPO> skuPOS = productSkuMapper.listProductsBySku(skuList);
+            productSkuPOS.addAll(skuPOS);
+        }
+        return productSkuPOS;
+    }
 }
