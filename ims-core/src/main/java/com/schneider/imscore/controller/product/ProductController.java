@@ -4,6 +4,7 @@ import com.schneider.imscore.biz.service.product.ProductService;
 import com.schneider.imscore.resp.Result;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,17 +25,49 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    /**
+     * 图搜
+     * @param request
+     * @param language
+     * @return
+     */
     @PostMapping("/product/search")
-    public Result listProductsBySearch(HttpServletRequest request){
+    public Result listProductsBySearch(HttpServletRequest request,String language){
+        long currentTimeMillis = System.currentTimeMillis();
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
-        return productService.listProductsBySearch(file);
+        return productService.listProductsBySearch(file,language,request,currentTimeMillis);
     }
 
+    /**
+     * 新增图搜图片
+     * @param request
+     * @param productReqData
+     * @return
+     */
     @PostMapping("/product/search/add")
     public Result addImageSearch(HttpServletRequest request, ProductReqData productReqData){
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
         return productService.saveImageSearch(productReqData,file);
+    }
+
+    /**
+     * 日志展示
+     * @return
+     */
+    @GetMapping("/product/search/log")
+    public Result getLog(){
+        return productService.getLog();
+    }
+
+    /**
+     * 模糊查询产品
+     * @param productReqData
+     * @return
+     */
+    @GetMapping("/product/search/fuzzy")
+    public Result listProductsFuzzySearch(ProductReqData productReqData){
+        return productService.listProductsFuzzySearch(productReqData);
     }
 }

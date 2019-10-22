@@ -18,46 +18,19 @@ public class FileUtil {
 
 
     /**
-     * MultipartFile转File
-     * @param multipartFile
+     * file转Base64
+     * @param file
      * @return
-     * @throws Exception
      */
-    public static File multipartFileToFile(MultipartFile multipartFile)  {
-        File f = null;
+    public static String multipartFileToBase64(MultipartFile file) {
+        String base64EncoderImg = null;
         try {
-            f=File.createTempFile("tmp", null);
-            multipartFile.transferTo(f);
+            BASE64Encoder base64Encoder =new BASE64Encoder();
+            base64EncoderImg = base64Encoder.encode(file.getBytes());
         } catch (IOException e) {
-            log.error("MultipartFile转File失败",e);
+            log.info("MultipartFile转Base64失败",e);
         }
-        if (f != null){
-            //使用完成删除文件
-            f.deleteOnExit();
-        }
-        return f;
+        return base64EncoderImg.replaceAll("[\\s*\t\n\r]", "");
     }
 
-
-    /**
-     * MultipartFile转Base64
-     * @param multipartFile
-     * @return
-     * @throws Exception
-     */
-    public static String multipartFileToBase64(MultipartFile multipartFile) {
-        File f = multipartFileToFile(multipartFile);
-        String base64= null;
-        byte[] buffer = new byte[0];
-        try {
-            FileInputStream inputFile = new FileInputStream(f);
-            buffer = new byte[(int) f.length()];
-            inputFile.read(buffer);
-            inputFile.close();
-        } catch (IOException e) {
-            log.error("MultipartFile转Base64失败",e);
-        }
-        base64=new BASE64Encoder().encode(buffer);
-        return  base64.replaceAll("[\\s*\t\n\r]", "");
-    }
 }

@@ -17,7 +17,6 @@ public class ImsExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result apiExceptionHandler(Exception ex) {
-//        log.error("Exception异常抛出", ex);
         return Result.buildFailed(ResultCode.FAILED.getCode(), ex.getMessage());
     }
 
@@ -28,7 +27,6 @@ public class ImsExceptionHandler {
      */
     @ExceptionHandler(BizException.class)
     public Result apiExceptionHandler(BizException bex) {
-//        log.error("BizException异常抛出：{}", bex);
         return Result.buildFailed(bex.getCode(), bex.getMessage());
     }
 

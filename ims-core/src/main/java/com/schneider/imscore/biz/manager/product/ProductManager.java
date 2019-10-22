@@ -18,15 +18,19 @@ import com.aliyuncs.imagesearch.model.v20190325.SearchImageRequest;
 import com.aliyuncs.imagesearch.model.v20190325.SearchImageResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.schneider.imscore.enums.LanguageEnum;
 import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
+import com.schneider.imscore.mapper.product.ImageSearchLogMapper;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
+import com.schneider.imscore.mapper.product.SkuMatchingMapper;
 import com.schneider.imscore.po.product.ImageSearchAddPO;
+import com.schneider.imscore.po.product.ImageSearchLogPO;
 import com.schneider.imscore.po.product.ProductSkuPO;
+import com.schneider.imscore.po.product.SkuMatchingPO;
 import com.schneider.imscore.resp.ResultCode;
 import com.schneider.imscore.resp.exception.BizException;
-import com.schneider.imscore.util.AliyunOSSClientUtil;
-import com.schneider.imscore.util.DateUtils;
-import com.schneider.imscore.util.FileUtil;
+import com.schneider.imscore.util.*;
+import com.schneider.imscore.vo.product.Product;
 import com.schneider.imscore.vo.product.ProductVO;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +41,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
+import static com.schneider.imscore.constant.Constant.SUCCESS_CODE;
+import static java.util.stream.Collectors.toList;
 
 
 /**
@@ -81,56 +87,274 @@ public class ProductManager {
     @Autowired
     private ImageSearchAddMapper imageSearchAddMapper;
 
+    @Autowired
+    private ImageSearchLogMapper imageSearchLogMapper;
+
+    @Autowired
+    private SkuMatchingMapper skuMatchingMapper;
 
     /**
      * 图片搜索
+     * @param language
      * @param multipartFile
      * @return
      * @throws BizException
-     * @throws ClientException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile) throws BizException {
-        List<ProductVO> productVOS = new ArrayList<>();
-       // 1.图片ocr
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,Long ocrStart) throws BizException {
+        // 图片ocr
         List<String> text = imageOcr(multipartFile);
-        ProductSkuPO productOcrPO = null;
+        long ocrEnd = System.currentTimeMillis();
+        int ocrTime = (int) (ocrEnd - ocrStart);
+        String jsonOcr = JSON.toJSONString(text);
+        log.info("ocr返回结果{}",jsonOcr);
 
-        // 2.图片搜索
+        // 获取ip地址
+        String ipAddress = IpUtil.getIpAddress(request);
+        String country = Geoip2Util.getCountryByIp(ipAddress);
+        // 图片压缩
+        MultipartFile[] multipartFiles = new MultipartFile[1];
+        multipartFiles[0] = multipartFile;
+        MultipartFile[] result = ImageSizeUtil.byte2Base64StringFun(multipartFiles);
+        multipartFile = result[0];
+
+        long imageSearchStart = System.currentTimeMillis();
+        // 图搜
         SearchImageResponse response = imageSearch(multipartFile);
+        long imageSearchEnd = System.currentTimeMillis();
+        int imageSearchTime = (int)(imageSearchEnd - imageSearchStart);
+
+        // 图搜和ocr结果解析
+        List<ProductVO> productVOS = responseResult(response, text, language);
+
+        // 接口整体调用时长
+        long endTime = System.currentTimeMillis();
+        int wholeTime = (int) (endTime - ocrStart);
+        // 监控日志
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country);
+        return  productVOS;
+    }
+
+    /**
+     * 记录接口调用情况
+     * @param ocrTime
+     * @param imageSearchTime
+     * @param ipAddress
+     * @param ocrResult
+     * @param wholeApiTime
+     */
+    private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime,
+                                    String country){
+        ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
+        imageSearchLogPO.setIpAddress(ipAddress);
+        imageSearchLogPO.setOcrTime(ocrTime);
+        imageSearchLogPO.setImageSearchTime(imageSearchTime);
+        imageSearchLogPO.setWholeApiTime(wholeApiTime);
+        imageSearchLogPO.setOcrResult(ocrResult);
+        imageSearchLogPO.setCreated(new Date());
+        imageSearchLogPO.setCountry(country);
+        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
+    }
+
+
+
+    /**
+     * 结果解析
+     * @param response
+     * @param text
+     * @param language
+     * @return
+     */
+    private List<ProductVO> responseResult(SearchImageResponse response, List<String> text,String language){
+        List<ProductVO> productVOS = new ArrayList<>();
         if (response != null){
             List<SearchImageResponse.Auction> auctions = response.getAuctions();
             if (!CollectionUtils.isEmpty(auctions)){
                 if (!CollectionUtils.isEmpty(text)){
                     // ocr的结果去数据库查询 查到：合并   查不到：返回图搜
-                    for (String str: text) {
-                        ProductSkuPO productSkuPO = productSkuMapper.selectProductByReference(str);
-                        if (productSkuPO != null){
-                            productOcrPO = productSkuPO;
-                            break;
+                    List<ProductSkuPO>  productSkuPOs = productSkuMapper.listProductsBySku(text);
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
+                        // O替换成0
+                        List<String> productIds = doSpecialOcr(text);
+                        if (!CollectionUtils.isEmpty(productIds)){
+                            // ocr结果数据库中精准匹配
+                            productSkuPOs = productSkuMapper.listProductsBySku(productIds);
                         }
                     }
+                    // ocr在库中没有查到 则模糊查询
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
+                        List<String> ocr = text.stream().filter(item -> item.length()>= 7).collect(Collectors.toList());
+                        if (!CollectionUtils.isEmpty(ocr)){
+                            productSkuPOs = productSkuMapper.listProductsLikeSku(ocr);
+                            if (productSkuPOs .size() > 1){
+                                productSkuPOs = new ArrayList<>();
+                            }
+                        }
+                    }
+                    // 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
+                    productSkuPOs = fuzzySearch(productSkuPOs, text);
+
                     // ocr 结果未查到
-                    if (productOcrPO == null){
-                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                    if (CollectionUtils.isEmpty(productSkuPOs)){
+                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
                     }else {
-                        // ocr结果查到了
-                        productVOS = productVOList(auctions, productVOS,4);
-                        ProductVO productVO = new ProductVO();
-                        productVO.setBrand(productOcrPO.getBrand());
-                        productVO.setFamily(productOcrPO.getFamily());
-                        productVO.setDescription(productOcrPO.getDescription());
-                        productVO.setCategory(productOcrPO.getCategory());
-                        productVO.setProductId(productOcrPO.getReference());
-                        productVOS.add(productVO);
-                        productVOS = productVOS.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(o -> o.getProductId()))), ArrayList::new));
+                        int size = productSkuPOs.size();
+                        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+                        // 返回5条ocr查询的数据
+                        if (size >= IMAGE_SEARCH_RESULT_LIMIT){
+                            for (int i = 0; i < IMAGE_SEARCH_RESULT_LIMIT; i++) {
+                                ProductSkuPO productSkuPO = productSkuPOs.get(i);
+                                ProductVO productVO = new ProductVO();
+                                init(productVO,productSkuPO,language,ossClient);
+                                productVOS.add(productVO);
+                            }
+                            //   图搜结果 + ocr结果
+                        }else {
+                            for (int i = 0; i < size; i++) {
+                                ProductSkuPO productSkuPO = productSkuPOs.get(i);
+                                ProductVO productVO = new ProductVO();
+                                init(productVO,productSkuPO,language,ossClient);
+                                productVOS.add(productVO);
+                            }
+                            List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size, language);
+                            productVOS.addAll(vos);
+                            productVOS = removeDuplicateContain(productVOS);
+                        }
                     }
                 }else {
-                    productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT);
+                    productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
                 }
             }
         }
-        // 3.返回搜索结果列表
         return productVOS;
+    }
+
+    /**
+     * ocr结果含有O替换成0
+     * @param text
+     * @return
+     */
+    private List<String> doSpecialOcr(List<String> text){
+        List<String> productIds = new ArrayList<>();
+        for (String str: text) {
+            if (str.contains("O")){
+                String o = str.replaceAll("O", "0");
+                productIds.add(o);
+            }
+        }
+        return productIds;
+    }
+
+
+    /**
+     * 查询出来的ocr结果逐一去数据库中description字段模糊查询 直到查询到数据
+     * @param productSkuPOs
+     * @param text
+     * @return
+     */
+    private List<ProductSkuPO> fuzzySearch(List<ProductSkuPO>  productSkuPOs,List<String> text){
+        if (CollectionUtils.isEmpty(productSkuPOs)){
+            boolean flag = false;
+            int number = 0;
+            for (int i = 0; i < text.size(); i++) {
+                String str = text.get(i);
+                productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
+                if (!CollectionUtils.isEmpty(productSkuPOs)){
+                    flag = true;
+                    number = i;
+                    break;
+                }
+            }
+            // 以数据库查到的数据为基准，过滤含有ocr的结果
+            if (flag){
+                for (int i = number +1; i < text.size(); i++) {
+                    String firstOcr = text.get(i);
+                    List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescriptionOcr().contains(firstOcr)).collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(collect)){
+                        productSkuPOs = collect;
+                    }
+                }
+            }
+        }
+        return productSkuPOs;
+    }
+
+
+    /**
+     * 利用list.contain() 去重
+     * @param list
+     * @return
+     */
+    private   <T> List<T> removeDuplicateContain(List<T> list){
+        List<T> listTemp = new ArrayList<>();
+        for (T aList : list) {
+            if (!listTemp.contains(aList)) {
+                listTemp.add(aList);
+            }
+        }
+        return listTemp;
+    }
+
+
+    /**
+     * 说明中去除brand family category
+     * @param brand
+     * @param family
+     * @param category
+     * @param description
+     * @return
+     */
+    public String doSpecialDescription(String brand ,String family, String category,String description){
+        if (!StringUtils.isEmpty(brand)&&
+        !StringUtils.isEmpty(family)&&
+        !StringUtils.isEmpty(category)&&
+        !StringUtils.isEmpty(description)){
+            return description.replaceAll(brand+ " ", "").replaceAll(family+ " ", "").replaceAll(category+ " ", "");
+        }else {
+            return description;
+        }
+    }
+
+
+    /**
+     * 多语言赋值
+     * @param productVO
+     * @param productOcrPO
+     * @param language
+     * @param ossClient
+     */
+    private void init(ProductVO productVO ,ProductSkuPO productOcrPO,String language,OSSClient ossClient){
+        productVO.setProductId(productOcrPO.getReference());
+        if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrand());
+            productVO.setCategory(productOcrPO.getCategory());
+            String description = doSpecialDescription(productOcrPO.getBrand(), productOcrPO.getFamily(),
+                    productOcrPO.getCategory(), productOcrPO.getDescription());
+            productVO.setDescription(description);
+            productVO.setFamily(productOcrPO.getFamily());
+        }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandChinese());
+            productVO.setCategory(productOcrPO.getCategoryChinese());
+            String description = doSpecialDescription(productOcrPO.getBrandChinese(), productOcrPO.getFamilyChinese(),
+                    productOcrPO.getCategoryChinese(), productOcrPO.getDescriptionChinese());
+            productVO.setDescription(description);
+            productVO.setFamily(productOcrPO.getFamilyChinese());
+        }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandPortuguese());
+            productVO.setCategory(productOcrPO.getCategoryPortuguese());
+            String description = doSpecialDescription(productOcrPO.getBrandPortuguese(), productOcrPO.getFamilyPortuguese(),
+                    productOcrPO.getCategoryPortuguese(), productOcrPO.getDescriptionPortuguese());
+            productVO.setDescription(description);
+            productVO.setFamily(productOcrPO.getFamilyPortuguese());
+        }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+            productVO.setBrand(productOcrPO.getBrandRussian());
+            productVO.setCategory(productOcrPO.getCategoryRussian());
+            String description = doSpecialDescription(productOcrPO.getBrandRussian(), productOcrPO.getFamilyRussian(),
+                    productOcrPO.getCategoryRussian(), productOcrPO.getDescriptionRussian());
+            productVO.setDescription(description);
+            productVO.setFamily(productOcrPO.getFamilyRussian());
+        }
+        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productOcrPO.getOssKey());
+        productVO.setUrl(url);
     }
 
 
@@ -138,15 +362,17 @@ public class ProductManager {
      * 直接返回图搜结果集（5条）
      * @param auctionsList
      * @param productVOS
+     * @param limit
+     * @param language
      * @return
      */
-    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit){
+    private List<ProductVO> productVOList(List<SearchImageResponse.Auction> auctionsList,List<ProductVO> productVOS,int limit,String language){
             List<SearchImageResponse.Auction> auctions = new ArrayList<>();
             if (auctionsList.size() > limit){
                 auctions = auctionsList.subList(0, limit);
-                productVOS = convert(auctions);
+                productVOS = convert(auctions,language);
             }else {
-                productVOS = convert(auctionsList);
+                productVOS = convert(auctionsList,language);
             }
         return productVOS;
     }
@@ -154,9 +380,11 @@ public class ProductManager {
     /**
      * 转换
      * @param auctions
+     * @param language
      * @return
      */
-    private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions){
+    private  List<ProductVO> convert(List<SearchImageResponse.Auction> auctions,String language){
+        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
         List<ProductVO> productVOS = new ArrayList<>();
         for (SearchImageResponse.Auction auction: auctions) {
             ProductVO productVO = new ProductVO();
@@ -172,10 +400,39 @@ public class ProductManager {
                     continue;
                 }
                 if (productVO1 != null){
-                    productVO.setBrand(productVO1.getBrand());
-                    productVO.setCategory(productVO1.getCategory());
-                    productVO.setDescription(productVO1.getDescription());
-                    productVO.setFamily(productVO1.getFamily());
+                    if (!StringUtils.isEmpty(productVO1.getKey())){
+                        String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO1.getKey());
+                        productVO.setUrl(url);
+                    }
+                    if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrand());
+                        productVO.setCategory(productVO1.getCategory());
+                        productVO.setFamily(productVO1.getFamily());
+                        String description = doSpecialDescription(productVO1.getBrand(), productVO1.getFamily(),
+                                productVO1.getCategory(), productVO1.getDescription());
+                        productVO.setDescription(description);
+                    }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandChinese());
+                        productVO.setCategory(productVO1.getCategoryChinese());
+                        productVO.setFamily(productVO1.getFamilyChinese());
+                        String description = doSpecialDescription(productVO1.getBrandChinese(), productVO1.getFamilyChinese(),
+                                productVO1.getCategoryChinese(), productVO1.getDescriptionChinese());
+                        productVO.setDescription(description);
+                    }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandPortuguese());
+                        productVO.setCategory(productVO1.getCategoryPortuguese());
+                        productVO.setFamily(productVO1.getFamilyPortuguese());
+                        String description = doSpecialDescription(productVO1.getBrandPortuguese(), productVO1.getFamilyPortuguese(),
+                                productVO1.getCategoryPortuguese(), productVO1.getDescriptionPortuguese());
+                        productVO.setDescription(description);
+                    }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+                        productVO.setBrand(productVO1.getBrandRussian());
+                        productVO.setCategory(productVO1.getCategoryRussian());
+                        productVO.setFamily(productVO1.getFamilyRussian());
+                        String description = doSpecialDescription(productVO1.getBrandRussian(), productVO1.getFamilyRussian(),
+                                productVO1.getCategoryRussian(), productVO1.getDescriptionRussian());
+                        productVO.setDescription(description);
+                    }
                     productVOS.add(productVO);
                 }
             }
@@ -184,12 +441,11 @@ public class ProductManager {
     }
 
 
-
     /**
      * 图像搜索
      * @param multipartFile
      * @return
-     * @throws Exception
+     * @throws BizException
      */
     private SearchImageResponse imageSearch(MultipartFile multipartFile) throws BizException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
@@ -224,8 +480,10 @@ public class ProductManager {
     }
 
     /**
-     * ocr 参数初始化
+     * 参数初始化
+     * @param multipartFile
      * @return
+     * @throws BizException
      */
     private  ImageSyncScanRequest imageOcrInit(MultipartFile multipartFile) throws BizException{
         ImageSyncScanRequest imageSyncScanRequest = new ImageSyncScanRequest();
@@ -238,16 +496,9 @@ public class ProductManager {
         // ocr
         httpBody.put("scenes", Arrays.asList("ocr"));
 
-        String url = null;
-        try {
-            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
-            String dateStr = DateUtils.format(Calendar.getInstance().getTime(),
-                    "yyyyMMddHHmmssSSSS");
-            String key = MessageFormat.format("ocr/{0}{1}", dateStr + "/", multipartFile.getOriginalFilename());
-            url = aliyunOSSClientUtil.uploadFile(ossClient, multipartFile.getInputStream(), key);
-        } catch (IOException e) {
-            throw new  BizException(ResultCode.OSS_UPLOAD_ERROR);
-        }
+        // 上传图片oss
+        Map<String, String> ocr = uploadPicture(multipartFile, "ocr");
+        String url = ocr.get("url");
 
         JSONObject task = new JSONObject();
         task.put("dataId", UUID.randomUUID().toString());
@@ -268,11 +519,35 @@ public class ProductManager {
         return imageSyncScanRequest;
     }
 
+    /**
+     * 上传图片
+     * @param multipartFile
+     * @param name
+     * @return
+     * @throws BizException
+     */
+    private Map<String,String> uploadPicture(MultipartFile multipartFile,String name) throws BizException{
+        try {
+            Map<String,String> map = new HashMap<>(2);
+            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+            String dateStr = DateUtils.format(Calendar.getInstance().getTime(),
+                    "yyyyMMddHHmmssSSSS");
+            String key = MessageFormat.format(name+"/{0}{1}", dateStr + "/", multipartFile.getOriginalFilename());
+           String url = aliyunOSSClientUtil.uploadFile(ossClient, multipartFile.getInputStream(), key);
+           map.put("key",key);
+           map.put("url",url);
+           return map;
+        } catch (IOException e) {
+            log.error("oss上传失败",e);
+            throw new  BizException(ResultCode.OSS_UPLOAD_ERROR);
+        }
+    }
+
 
     /**
      * 图片ocr
      * @param multipartFile
-     * @throws Exception
+     * @throws BizException
      */
     private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
         IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
@@ -281,9 +556,6 @@ public class ProductManager {
 
         // 参数初始化
         ImageSyncScanRequest imageSyncScanRequest = imageOcrInit(multipartFile);
-
-        // ocr 返回结果集合
-        List<String> ocrResults = new ArrayList<>();
 
         HttpResponse httpResponse = null;
 
@@ -295,18 +567,29 @@ public class ProductManager {
         }
 
         //服务端接收到请求，并完成处理返回的结果
+        return ocrResponse(httpResponse);
+    }
+
+    /**
+     * ocr结果解析
+     * @param httpResponse
+     * @return
+     * @throws BizException
+     */
+    private List<String> ocrResponse(HttpResponse httpResponse) throws BizException{
+        List<String> ocrResults = new ArrayList<>();
         if (httpResponse != null && httpResponse.isSuccess()) {
             JSONObject scrResponse = JSON.parseObject(org.apache.commons.codec.binary.StringUtils.newStringUtf8(httpResponse.getHttpContent()));
             int requestCode = scrResponse.getIntValue("code");
             //每一张图片的检测结果
             JSONArray taskResults = scrResponse.getJSONArray("data");
-            if (200 == requestCode) {
+            if (SUCCESS_CODE == requestCode) {
                 for (Object taskResult : taskResults) {
                     //单张图片的处理结果
                     int taskCode = ((JSONObject) taskResult).getIntValue("code");
                     //图片要检测的场景的处理结果, 如果是多个场景，则会有每个场景的结果
                     JSONArray sceneResults = ((JSONObject) taskResult).getJSONArray("results");
-                    if (200 == taskCode) {
+                    if (SUCCESS_CODE == taskCode) {
                         for (Object sceneResult : sceneResults) {
                             String scene = ((JSONObject) sceneResult).getString("scene");
                             String suggestion = ((JSONObject) sceneResult).getString("suggestion");
@@ -328,9 +611,7 @@ public class ProductManager {
                     }
                 }
             } else {
-                /**
-                 * 表明请求整体处理失败，原因视具体的情况详细分析
-                 */
+                //表明请求整体处理失败，原因视具体的情况详细分析
                 log.error("ocr:the whole image scan request failed. response:{}",JSON.toJSONString(scrResponse));
                 throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
             }
@@ -342,11 +623,11 @@ public class ProductManager {
     }
 
     /**
-     * 新增图搜
+     * 新增图搜照片
      * @param productReqData
      * @param multipartFile
      * @return
-     * @throws ClientException
+     * @throws BizException
      */
     @Transactional(rollbackFor = {Exception.class, BizException.class})
     public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile)throws BizException {
@@ -360,23 +641,39 @@ public class ProductManager {
         // 必填，商品id，最多支持 512个字符。
         request.setProductId(productReqData.getProductId());
 
-        // 2. 如果多次添加图片具有相同的ProductId + PicName，以最后一次添加为准，前面添加的的图片将被覆盖。
+        // 如果多次添加图片具有相同的ProductId + PicName，以最后一次添加为准，前面添加的的图片将被覆盖。
         request.setPicName(multipartFile.getOriginalFilename());
-        // 2. 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
+        // 对于通用搜索：不论是否设置类目，系统会将类目设置为88888888。
         request.setCategoryId(88888888);
         // 图片的base64编码
         String encodePicContent = FileUtil.multipartFileToBase64(multipartFile);
-        request.setPicContent(encodePicContent);
         // 必填，图片内容，Base64编码。
         request.setPicContent(encodePicContent);
 
         // 选填，用户自定义的内容，最多支持 4096个字符。
-
-        ProductSkuPO productSkuPO = new ProductSkuPO();
+        Product productSkuPO = new Product();
         productSkuPO.setBrand(productReqData.getBrand());
+        productSkuPO.setBrandChinese(productReqData.getBrandChinese());
+        productSkuPO.setBrandPortuguese(productReqData.getBrandPortuguese());
+        productSkuPO.setBrandRussian(productReqData.getBrandRussian());
+
         productSkuPO.setDescription(productReqData.getDescription());
+        productSkuPO.setDescriptionChinese(productReqData.getDescriptionChinese());
+        productSkuPO.setDescriptionPortuguese(productReqData.getDescriptionPortuguese());
+        productSkuPO.setDescriptionRussian(productReqData.getDescriptionRussian());
+
         productSkuPO.setCategory(productReqData.getCategory());
+        productSkuPO.setCategoryChinese(productReqData.getCategoryChinese());
+        productSkuPO.setCategoryPortuguese(productReqData.getCategoryPortuguese());
+        productSkuPO.setCategoryRussian(productReqData.getCategoryRussian());
+
         productSkuPO.setFamily(productReqData.getFamily());
+        productSkuPO.setFamilyChinese(productReqData.getFamilyChinese());
+        productSkuPO.setFamilyPortuguese(productReqData.getFamilyPortuguese());
+        productSkuPO.setFamilyRussian(productReqData.getFamilyRussian());
+
+        Map<String, String> newPicture = uploadPicture(multipartFile, "newPicture");
+        productSkuPO.setKey(newPicture.get("key"));
 
         request.setCustomContent(JSON.toJSONString(productSkuPO));
         AddImageResponse acsResponse = null;
@@ -401,6 +698,47 @@ public class ProductManager {
         return  acsResponse;
     }
 
+    /**
+     * 查询产品
+     * @param productReqData
+     * @return
+     */
+    public List<ProductVO> searchProductBySkuOrCategory(ProductReqData productReqData){
+        List<ProductSkuPO> productSkuPOS = new ArrayList<>();
+        productReqData.setSearchCriteria(StringOperationUtil.sqlReplace(productReqData.getSearchCriteria()));
+        List<ProductVO> productVOS = new ArrayList<>();
+        ProductSkuPO skuPO = productSkuMapper.selectProductByReference(productReqData.getSearchCriteria());
+        // 通过sku查询产品
+        if (skuPO != null){
+            productSkuPOS.add(skuPO);
+            // 非施耐德产品
+            if (StringUtils.isEmpty(skuPO.getOssKey())){
+                // 通过非施耐德sku查询施耐德产品列表
+                productSkuPOS = listsNonSeProduct(productReqData.getSearchCriteria(),productSkuPOS);
+            }
+            OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+            for (ProductSkuPO productSkuPO : productSkuPOS) {
+                ProductVO productVO = new ProductVO();
+                init(productVO,productSkuPO,productReqData.getLanguage(),ossClient);
+                productVOS.add(productVO);
+            }
+        }
+        return productVOS;
+    }
 
-
+    /**
+     * 通过非施耐德sku查询施耐德产品列表
+     * @param sku
+     * @param productSkuPOS
+     * @return
+     */
+    private List<ProductSkuPO> listsNonSeProduct(String sku,List<ProductSkuPO> productSkuPOS){
+        List<SkuMatchingPO> skuMatchingPOS = skuMatchingMapper.selectMatchByCompetitorSku(sku);
+        if (!CollectionUtils.isEmpty(skuMatchingPOS)){
+            List<String> skuList = skuMatchingPOS.stream().map(SkuMatchingPO::getSchneiderElectricSku).collect(toList());
+            List<ProductSkuPO> skuPOS = productSkuMapper.listProductsBySku(skuList);
+            productSkuPOS.addAll(skuPOS);
+        }
+        return productSkuPOS;
+    }
 }

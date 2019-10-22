@@ -8,6 +8,8 @@ import org.apache.commons.lang.StringUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 特殊符号转译
@@ -17,9 +19,13 @@ import java.util.List;
  */
 public class StringOperationUtil {
 
-    // 需要转义的特殊字符
+    /**
+     * 需要转义的特殊字符
+     */
     private static final String[] SEARCHSTR = {"\"", "\\\"", "\\", "\\\\"};
-    // 转移后的字符串
+    /**
+     * 转义后的字符串
+      */
     private static final String[] REPLACEMENT = {"%20#", "%21#", "%22#", "%23#"};
 
     /**
@@ -85,4 +91,25 @@ public class StringOperationUtil {
         List arrayList = new ArrayList(list);
         return arrayList;
     }
+
+
+    /**
+     * 过滤特殊字符
+     * @param skus
+     * @return
+     */
+    public static List<String> replaceSpecialChar(List<String> skus){
+        String regEx="[`~!@#$%^&*()+=|{}':;',.<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。， 、]";
+        String aa = "";
+
+        List<String> results = new ArrayList<>();
+        for (String sku: skus) {
+            Pattern p = Pattern.compile(regEx);
+            Matcher m = p.matcher(sku);
+            String newString = m.replaceAll(aa).trim();
+            results.add(newString);
+        }
+        return results;
+    }
+
 }

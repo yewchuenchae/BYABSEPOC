@@ -1,11 +1,13 @@
 package com.schneider.imscore.util;
 
+import com.schneider.imscore.resp.ResultCode;
+import com.schneider.imscore.resp.exception.BizException;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -16,6 +18,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import static com.schneider.imscore.constant.Constant.*;
 
 /**
  * @author liyuan
@@ -24,14 +27,21 @@ import java.util.Map;
  */
 @Slf4j
 public class ImageSizeUtil {
+
+    /**
+     * 支持上传的图片后缀
+     */
+    private static final String[] SUFFIXS   = {"png", "jpg","jpeg"};
+
+
     /**
      * 获取图片最长边长度
      * @param params
      * @return
      */
-    public static int getImageLengthOfSide(MultipartFile params){
-        int lengthSize = 0;
-        Map<String, Integer> result = new HashMap<>();
+    public static int getImageLengthOfSide(MultipartFile params) throws BizException {
+        int lengthSize = 3000;
+        Map<String, Integer> result = new HashMap<>(5);
         // 获取图片格式
         String suffixName = getSuffixNameInfo(params);
         try {
@@ -41,13 +51,18 @@ public class ImageSizeUtil {
             reader.setInput(iis, true);
             result.put("width",reader.getWidth(0));
             result.put("height",reader.getHeight(0));
-            if(reader.getWidth(0) > reader.getHeight(0)){
-                lengthSize = reader.getWidth(0);
+            int width = reader.getWidth(0);
+            int height = reader.getHeight(0);
+            if (width < LOWEST_PIXEL || height < LOWEST_PIXEL){
+                throw new BizException(ResultCode.UNSUPPORTED_PIC_PIXELS);
+            }
+            if(width > height){
+                lengthSize = width;
             }else{
-                lengthSize = reader.getHeight(0);
+                lengthSize = height;
             }
         } catch (IOException e) {
-            log.error("图片压缩失败",e);
+            log.error("图片压缩失败，suffixName :{}",suffixName,e);
         }
 
         return lengthSize;
@@ -60,16 +75,17 @@ public class ImageSizeUtil {
      */
     public static String getSuffixNameInfo(MultipartFile params){
         String result = "";
-        // 图片后缀
-        String suffixName = params.getOriginalFilename().substring(
-                params.getOriginalFilename().lastIndexOf(".")).toLowerCase();
+        String originalFilename = params.getOriginalFilename();
 
-        if(suffixName.indexOf("png")>0){
-            result = "png";
-        }else if(suffixName.indexOf("jpg")>0){
-            result = "jpg";
-        }else if(suffixName.indexOf("jpeg")>0){
-            result = "jpeg";
+        // 图片后缀
+        String suffixName = originalFilename.substring(
+                originalFilename.lastIndexOf(".")).toLowerCase();
+        if(suffixName.indexOf(IMAGE_FORMAT_PNG)>0){
+            result = IMAGE_FORMAT_PNG;
+        }else if(suffixName.indexOf(IMAGE_FORMAT_JPG)>0){
+            result = IMAGE_FORMAT_JPG;
+        }else if (suffixName.indexOf(IMAGE_FORMAT_JPEG)>0){
+            result = IMAGE_FORMAT_JPG;
         }
 
         return result;
@@ -77,23 +93,19 @@ public class ImageSizeUtil {
 
 
 
-
     /**
      * 根据指定大小压缩图片
      *
      * @param imageBytes  源图片字节数组
-     * @param desFileSize 指定图片大小，单位kb
      * @return 压缩质量后的图片字节数组
      */
     public static byte[] compressPicForScale(byte[] imageBytes,int imageLengthSize) {
         if (imageBytes == null || imageBytes.length <= 0) {
             return imageBytes;
         }
-        long srcSize = imageBytes.length;
         double accuracy = 0.5;
         double v = imageLengthSize;
         try {
-
             do {
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes);
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream(imageBytes.length);
@@ -104,7 +116,6 @@ public class ImageSizeUtil {
                 imageBytes = outputStream.toByteArray();
                 v = v * accuracy;
             }while (v>1024);
-
         } catch (Exception e) {
             log.error("【图片压缩】msg=图片压缩失败!", e);
         }
@@ -133,7 +144,7 @@ public class ImageSizeUtil {
                 }
             }
 
-            return new BASE64DecodedMultipartFile(b, baseStrs[0]);
+            return new Base64DecodedMultipartFile(b, baseStrs[0]);
         } catch (IOException e) {
             log.error("图片压缩失败",e);
             return null;
@@ -151,7 +162,7 @@ public class ImageSizeUtil {
         int imageLengthSize = ImageSizeUtil.getImageLengthOfSide(fileImg[0]);
         Long swd = fileImg[0].getSize();
         // 像素大于1024 或 大于2M
-        if(imageLengthSize > 1024 || swd > 2097152){
+        if(imageLengthSize > HIGHEST_PIXEL || swd > HIGHEST_FILE_SIZE){
             BASE64Encoder encoder = new BASE64Encoder();
             String imgData1 = null;
             try {
@@ -166,6 +177,24 @@ public class ImageSizeUtil {
         }
 
         return result;
+    }
+
+    /**
+     * 校验支持的文件格式
+     * @param fileName
+     * @return 支持返回true
+     */
+    public static Boolean checkSuffix(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            return Boolean.FALSE;
+        }
+        String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
+        for (String string : SUFFIXS) {
+            if (StringUtils.equalsIgnoreCase(string, suffix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

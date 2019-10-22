@@ -33,6 +33,6 @@ aliyun:
     accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ
   green:
     region: ap-southeast-1
-    endpoint: green.ap-southeast-1.aliyuncs.com
+    endpoint: green-vpc.ap-southeast-1.aliyuncs.com
     accessKeyId: LTAIFmaxnrb5uGYd
     accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ

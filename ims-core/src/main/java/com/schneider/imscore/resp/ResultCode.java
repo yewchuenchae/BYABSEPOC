@@ -11,8 +11,13 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ResultCode {
-
+    /**
+     * SUCCESS 编码
+     */
     SUCCESS("200", "SUCCESS"),
+    /**
+     * FAILED 编码
+     */
     FAILED("500", "FAILED"),
 
     // 未上传图片
@@ -29,6 +34,8 @@ public enum ResultCode {
     OCR_ERROR("700","ocr api error"),
     // 新增图像搜索api调用失败
     IMAGE_SEARCH_ADD_ERROR("800","add image search  api error"),
+
+    UNSUPPORTED_PIC_PIXELS("801","The image search works best with photo that are at least 200*200px")
     ;
 
 

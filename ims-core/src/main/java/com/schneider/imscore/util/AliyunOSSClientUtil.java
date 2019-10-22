@@ -24,16 +24,16 @@ import java.util.Date;
 public class AliyunOSSClientUtil {
     //阿里云API的外网域名
     @Value("${aliyun.oss.endpoint}")
-    private  String ENDPOINTOUT;
+    private  String endPointOut;
     //阿里云API的密钥Access Key ID
     @Value("${aliyun.oss.accessKeyId}")
-    private  String ACCESSKEYID;
+    private  String accessKeyId;
     //阿里云API的密钥Access Key Secret
     @Value("${aliyun.oss.accessKeySecret}")
-    private  String ACCESSKEYSECRET;
+    private  String  accessKeySecret;
     //阿里云API的bucket名称
     @Value("${aliyun.oss.bucketName}")
-    private  String BUCKETNAME;
+    private  String bucketName;
 
 
 
@@ -42,7 +42,7 @@ public class AliyunOSSClientUtil {
      * @return
      */
     public  OSSClient getOSSClient() {
-        return new OSSClient(ENDPOINTOUT, ACCESSKEYID, ACCESSKEYSECRET);
+        return new OSSClient(endPointOut, accessKeyId, accessKeySecret);
     }
 
     /**
@@ -64,7 +64,7 @@ public class AliyunOSSClientUtil {
      * @return
      */
     public  String uploadFile(OSSClient ossClient, InputStream is, String fileKey) {
-        ossClient.putObject(BUCKETNAME, fileKey, is);
+        ossClient.putObject(bucketName, fileKey, is);
         return getUrlByFileKey(ossClient, fileKey);
     }
 
@@ -79,10 +79,10 @@ public class AliyunOSSClientUtil {
             return null;
         }
         try {
-            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(BUCKETNAME, key,
+            GeneratePresignedUrlRequest request = new GeneratePresignedUrlRequest(bucketName, key,
                 HttpMethod.GET);
             //附件地址有效期
-            request.setExpiration(new Date(new Date().getTime() + 90 * 60 * 1000));
+            request.setExpiration(new Date(System.currentTimeMillis() + 90 * 60 * 1000));
             URL url = ossClient.generatePresignedUrl(request);
             if (url == null) {
                 return "获取文件访问url出错";
