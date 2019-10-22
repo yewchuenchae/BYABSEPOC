@@ -12,6 +12,7 @@ import './assets/js/flexible'
 import '@/global/components.js'
 import '@/global/filter.js'
 import './request';
+import './utils';
 
 
 

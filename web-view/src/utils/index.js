@@ -25,7 +25,7 @@ Vue.prototype.utils = {
             status = false;
         }
         // 执行回调函数
-        cb && cb();
+        cb && cb(status);
     },
 }
 /** 

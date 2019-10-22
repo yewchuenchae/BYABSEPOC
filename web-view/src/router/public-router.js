@@ -1,4 +1,5 @@
 const Home = () => import('@/pages/home')   // 首页
+const List = () => import('@/pages/list')   // 列表页
 const Details = () => import('@/pages/details')   // 详情页
 // const Test = () => import('@/pages/test')   //  测试页
 
@@ -15,9 +16,13 @@ export default [
         components: {
             default: Home,
         },
-        meta: {
-            keepAlive:1111
-        }
+    },
+    {
+        path: '/list',
+        name: 'list',
+        components: {
+            default: List,
+        },
     }, 
     {
         path: '/details',
