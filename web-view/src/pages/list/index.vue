@@ -19,10 +19,10 @@
                 v-for="(item, idx) in list"
                 :key="idx">
                 <div class="top">
-                  <!-- <div class="goods-img">
+                  <div class="goods-img">
                     <img class="logo" src="./../../assets/img/item_icon.png" alt="">
                     <img class="icon" v-lazy="item.url" alt="">
-                  </div> -->
+                  </div>
                   <div class="info">
                     <p class="productId">{{item.productId}}</p>
                     <p class="category">{{item.category}}</p>
@@ -164,8 +164,8 @@ export default {
          * @method 底部输入sku搜索
         */
         search2(ev){
-            this.popupVisible = false;
             if(ev.keyCode == 13) {  //键盘回车的编码是13
+                this.popupVisible = false;
                 this.goDetails(this.sku2)
             }
         },
@@ -193,18 +193,13 @@ export default {
                 Indicator.close();
                 console.log(err)
             })
-            // this.$router.push({
-            //     name: 'details',
-            //     query: {
-            //         productId
-            //     }
-            // })
         },
         /** 
          * @method 点击相机回调
         */
         camera(){
             this.popupVisible = false;
+            console.log(111)
             let camera = document.getElementById('change');
             camera.click();
         },
@@ -286,6 +281,7 @@ export default {
             this.apis.upload(req).then((res)=>{
                 Indicator.close();
                 if(res.code == 200){
+                    this.sku2="";
                     this.list = res.data;
                 }else if(res.code == 801){
                     Toast({
@@ -412,7 +408,7 @@ export default {
               .info{
                   margin-left: 0.3rem;
                   flex: 1;
-                  font-size: 0.12rem;
+                  font-size: 0.22rem;
                   overflow: hidden;
                   box-sizing: border-box;
                   padding-right:0.2rem;
@@ -442,7 +438,7 @@ export default {
                   .productId{
                       line-height: 0.30rem;
                       margin-top:0.2rem;
-                      font-size: 0.18rem;
+                      font-size: 0.26rem;
                       font-family: 'ArialroundMT', Arial, Helvetica, sans-serif;
                   }
                   .category,.family{
@@ -549,17 +545,15 @@ export default {
             line-height: 0.5rem;
             height: 0.5rem;
             border: 0;
-            // font-size: 0.26rem;
-            font-size: 0.12rem;
+            font-size: 0.26rem;
             font-family: 'Nunito', sans-serif;
           }
           input::-webkit-input-placeholder {
             /* placeholder颜色  */
             color: #aab2bd;
             /* placeholder字体大小  */
-            // font-size: 0.26rem;
+            font-size: 0.26rem;
             text-align: center;
-            font-size: 0.12rem;
             font-family: 'Nunito', sans-serif;
           }
         }

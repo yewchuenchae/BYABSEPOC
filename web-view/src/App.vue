@@ -30,8 +30,9 @@ export default {
         })(),
         language: (navigator.browserLanguage || navigator.language).toLowerCase()
     }
+     
     if (!browser.versions.mobile) {
-      document.getElementsByTagName('body')[0].className = 'web'
+      // document.getElementsByTagName('body')[0].className = 'web'     //非移动终端设置了480px宽度
     }
   }
 }

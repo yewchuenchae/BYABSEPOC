@@ -22,7 +22,7 @@ router.beforeEach(async (to, from, next)=> {
   }
   // 判断跳转路由是否存在
   if(to.matched.length == 0){
-    from.name ? next(from) : next({name: 'home'})
+    from.name ? next(from) : next({ name: 'company'})
     return
   }
   // 初次加载且不为跟路由

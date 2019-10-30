@@ -7,7 +7,8 @@ import {
     InfiniteScroll,
     Actionsheet,
     Popup,
-    Lazyload
+    Lazyload,
+    Cell
 } from 'mint-ui'
 
 
@@ -20,3 +21,4 @@ Vue.component(Actionsheet.name, Actionsheet);
 Vue.component(Popup.name, Popup);
 Vue.use(InfiniteScroll);
 Vue.use(Lazyload);
+Vue.component(Cell.name, Cell);
