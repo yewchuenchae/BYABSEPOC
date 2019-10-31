@@ -62,7 +62,7 @@ public class ProductController {
     }
 
     /**
-     * 模糊查询产品
+     * 通过sku查询产品
      * @param productReqData
      * @return
      */

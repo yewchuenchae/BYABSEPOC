@@ -163,6 +163,9 @@
             <if test="description != null" >
                 description,
             </if>
+            <if test="descriptionOcr != null" >
+                description_ocr,
+            </if>
             <if test="descriptionChinese != null" >
                 description_chinese,
             </if>
@@ -233,6 +236,9 @@
             </if>
             <if test="description != null" >
                 #{description,jdbcType=VARCHAR},
+            </if>
+            <if test="descriptionOcr != null" >
+                #{descriptionOcr,jdbcType=VARCHAR},
             </if>
             <if test="descriptionChinese != null" >
                 #{descriptionChinese,jdbcType=VARCHAR},

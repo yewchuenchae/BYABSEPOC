@@ -120,6 +120,8 @@ public class ProductManager {
         long imageSearchStart = System.currentTimeMillis();
         // 图搜
         SearchImageResponse response = imageSearch(multipartFile);
+        String searchImageResponse = JSON.toJSONString(response);
+
         long imageSearchEnd = System.currentTimeMillis();
         int imageSearchTime = (int)(imageSearchEnd - imageSearchStart);
 
@@ -130,7 +132,7 @@ public class ProductManager {
         long endTime = System.currentTimeMillis();
         int wholeTime = (int) (endTime - ocrStart);
         // 监控日志
-        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country);
+        saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country,searchImageResponse);
         return  productVOS;
     }
 
@@ -143,7 +145,7 @@ public class ProductManager {
      * @param wholeApiTime
      */
     private void saveImageSearchLog(int ocrTime,int imageSearchTime,String ipAddress,String ocrResult,int wholeApiTime,
-                                    String country){
+                                    String country,String searchImageResponse){
         ImageSearchLogPO imageSearchLogPO = new ImageSearchLogPO();
         imageSearchLogPO.setIpAddress(ipAddress);
         imageSearchLogPO.setOcrTime(ocrTime);
@@ -152,6 +154,7 @@ public class ProductManager {
         imageSearchLogPO.setOcrResult(ocrResult);
         imageSearchLogPO.setCreated(new Date());
         imageSearchLogPO.setCountry(country);
+        imageSearchLogPO.setImageSearchResult(searchImageResponse);
         imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }
 
@@ -467,7 +470,7 @@ public class ProductManager {
         request.setCrop(true);
 
         // 选填，返回结果的数目。取值范围：1-100。默认值：10。
-        request.setNum(20);
+        request.setNum(5);
 
         SearchImageResponse response = null;
         try {

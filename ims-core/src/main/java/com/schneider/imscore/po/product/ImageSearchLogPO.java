@@ -25,6 +25,8 @@ public class ImageSearchLogPO {
 
     private String ocrResult;
 
+    private String imageSearchResult;
+
     private String creator;
 
     private String modifier;

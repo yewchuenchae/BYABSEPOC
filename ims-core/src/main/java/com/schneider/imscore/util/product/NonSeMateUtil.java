@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.schneider.imscore.mapper.product.ProductSkuMapper;
 import com.schneider.imscore.po.product.ProductSkuPO;
 import com.schneider.imscore.resp.Result;
+import com.schneider.imscore.util.excel.ExcelProduct;
 import com.schneider.imscore.util.excel.ExcelSkuMatching;
 import com.schneider.imscore.util.excel.ExcelUtil;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,7 +58,7 @@ public class NonSeMateUtil {
     }
 
     /**
-     * 非施耐德产品生产mate文件
+     * 非施耐德产品  mate文件
      * @param file
      * @param excelSkuMatchings
      * @return
@@ -107,22 +111,22 @@ public class NonSeMateUtil {
         String fileName = file.getOriginalFilename();
         try {
             is = file.getInputStream();
-            ExcelUtil<ExcelSkuMatching> excelUtil1 = new ExcelUtil<>(ExcelSkuMatching.class);
-            List<ExcelSkuMatching> excelSkuMatchings = excelUtil1.importExcel(fileName, is, 1);
+            ExcelUtil<ExcelProduct> excelUtil1 = new ExcelUtil<>(ExcelProduct.class);
+            List<ExcelProduct> excelSkuMatchings = excelUtil1.importExcel(fileName, is, 1);
             for (int i = 0; i < excelSkuMatchings.size(); i++) {
-                ExcelSkuMatching excelSkuMatching = excelSkuMatchings.get(i);
+                ExcelProduct excelSkuMatching = excelSkuMatchings.get(i);
 
                 ProductSkuPO productSkuPO = new ProductSkuPO();
-                productSkuPO.setReference(excelSkuMatching.getCompetitorSKU());
-                String description = excelSkuMatching.getSchneiderElectricSKU();
+                productSkuPO.setReference(excelSkuMatching.getReference());
+                String description = excelSkuMatching.getDescription();
 
-                productSkuPO.setDescription(description.substring(0,description.indexOf(",")));
+                productSkuPO.setDescription(description);
                 String replaceAll = description.replaceAll(" ", "");
                 productSkuPO.setDescriptionOcr(replaceAll);
 
-                productSkuPO.setBrand("Siemens");
-                productSkuPO.setFamily("SINAMICS V20");
-                productSkuPO.setCategory("Variable Speed Drives");
+                productSkuPO.setBrand(excelSkuMatching.getBrand());
+                productSkuPO.setFamily(excelSkuMatching.getFamily());
+                productSkuPO.setCategory(excelSkuMatching.getCategory());
                 productSkuPO.setCreated(new Date());
                 productSkuPO.setModified(new Date());
 
@@ -132,6 +136,88 @@ public class NonSeMateUtil {
             e.printStackTrace();
         }
         return Result.buildSuccess();
+    }
+
+    /**
+     * 非施耐德产品mate
+     * @param request
+     */
+    @PostMapping("/util/non/mate")
+    public Result nonSeMate(HttpServletRequest request){
+        String filePath = "C:\\Users\\liyuan11\\Desktop\\ATV12 edited";
+        String mateFile = "";
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        MultipartFile file = multipartRequest.getFile("file");
+        try {
+            String fileName = file.getOriginalFilename();
+            InputStream is1 = file.getInputStream();
+            ExcelUtil<ExcelProduct> excelUtil1 = new ExcelUtil<>(ExcelProduct.class);
+            List<ExcelProduct> excelProducts = excelUtil1.importExcel(fileName, is1, 1);
+            for (ExcelProduct excelProduct: excelProducts) {
+                if (StringUtils.isNotBlank(excelProduct.getReference())){
+                    Meta meta = new Meta();
+                    meta.setItem_id(excelProduct.getReference());
+                    meta.setCat_id("88888888");
+                    meta.setOperator("ADD");
+
+                    Product product1 = new Product();
+                    product1.setBrand(excelProduct.getBrand());
+                    product1.setCategory(excelProduct.getCategory());
+                    product1.setFamily(excelProduct.getFamily());
+                    String toJSONString = JSON.toJSONString(product1);
+                    meta.setCust_content(toJSONString);
+
+                    String filePathExcel = excelProduct.getFilePath();
+                    List<String> readfile = readfile(filePath+ filePathExcel);
+                    for (int i = 0; i < readfile.size(); i++) {
+                        List<String> names = new ArrayList<>();
+                        names.add((filePathExcel.substring(1)+"\\"+readfile.get(i)).replace("\\","/"));
+                        if (names.size() == 0){
+                            meta.setPic_list(null);
+                        }else {
+                            meta.setPic_list(names);
+                            meta.setCat_id("88888888");
+                            mateFile = mateFile.concat(JSON.toJSONString(meta)+"\n");
+                        }
+                    }
+                }
+            }
+
+
+            System.out.println(mateFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Result.buildSuccess();
+    }
+
+
+    /**
+     * 读取某个文件夹下的所有文件
+     */
+    public static List<String> readfile(String filepath) throws FileNotFoundException, IOException {
+        List<String> list = new ArrayList<>();
+        try {
+            File file = new File(filepath);
+            if (!file.isDirectory()) {
+
+            } else if (file.isDirectory()) {
+                String[] filelist = file.list();
+                for (int i = 0; i < filelist.length; i++) {
+                    File readfile = new File(filepath + "\\" + filelist[i]);
+                    if (!readfile.isDirectory()) {
+                        list.add(readfile.getName());
+
+                    } else if (readfile.isDirectory()) {
+                        readfile(filepath + "\\" + filelist[i]);
+                    }
+                }
+
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("readfile()   Exception:" + e.getMessage());
+        }
+        return list;
     }
 
 
