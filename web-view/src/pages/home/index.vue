@@ -1,205 +1,169 @@
 <template>
-<keep-alive>
-    <div id="home-page">
-        <div class="search">
-            <img class="search-icon" src="./../../assets/img/search_icon.png" alt="">
-            <!-- <input v-model='sku' placeholder="Enter part number/keywords" type="text"/> -->
-            <form @submit.prevent="formSubmit" action="javascript:return true">
-                <input type="search" v-model="sku" @keydown="search2($event)"  placeholder="Enter part number">
-            </form>
-            <img class="search-camera" @click="camera" src="./../../assets/img/search_camera.png" alt="">
-        </div>
-        <div 
-            class="box">
-            <div 
-                class="item"
-                v-for="(item, idx) in list"
-                :key="idx"
-                @click="goDetails(item.productId)">
-                <p class="brand">{{item.brand}}</p>
-                <p class="productId">{{item.productId}}</p>
-                <p class="category">{{item.category}}</p>
-                <p class="family">{{item.family}}</p>
-                <p class="description">{{item.description}}</p>
-            </div>
-            <div v-show='list.length==0' class="no-data">
-                NO Data
-            </div>
-        </div>
-        <input 
-            id="camera" 
-            type="file" 
-            accept="image/gif,image/jpeg,image/jpg,image/png,image/svg" 
-            capture="camera"
-            @change="changeFile();">
+  <div id="home-page">
+    <div class="top">
+      <img src="./../../assets/img/language_logo.png" alt="">
+      <span @click="open">{{$t('label.global')}}（{{
+        {ZH: '中文', EN: 'English',RU: 'русский', PT: 'português'}[$i18n.locale]
+        }}）</span>
+      <img src="./../../assets/img/next.png" alt="">
     </div>
-</keep-alive>
+    <div class="logo-box">
+      <!-- <img src="./../../assets/img/home_logo.png" alt="" class="logo"> -->
+      <img src="./../../assets/img/logo_placeholder.png" alt="" class="logo">
+    </div>
+    <p class="home-text">{{$t('message.homeText')}}</p>
+    <div class="button" @click="goSearch">
+      <img src="./../../assets/img/home_camera.png" alt="">
+      <span>{{$t('button.homeBtn')}}</span>
+    </div>
+    <mt-popup
+      v-model="popupVisible"
+      position="bottom">
+      <div class="language-list">
+        <p 
+          :class="$i18n.locale == 'EN' ? 'active' : ''"
+          @click="changeLanguage('EN')">
+          English
+        </p>
+        <p 
+          :class="$i18n.locale == 'ZH' ? 'active' : ''"
+          @click="changeLanguage('ZH')"
+        >中文</p>
+        <p 
+          :class="$i18n.locale == 'RU' ? 'active' : ''"
+          @click="changeLanguage('RU')"
+        >русский</p>
+        <p 
+          :class="$i18n.locale == 'PT' ? 'active' : ''"
+          @click="changeLanguage('PT')"
+        >português</p>
+      </div>
+    </mt-popup>
+  </div>
 </template>
 <script>
 /** 
  * @author ny
- * @page 首页
+ * @class 首页
 */
-import { Indicator } from 'mint-ui'
 export default {
-    name: 'Home',
-    data(){
-        return{
-            sku:'',
-            list:[],
-        }
-    },
-    mounted(){
-        this.list = [];
-    },
-    methods: {
-        formSubmit () {
-            return false
-        },
-        search(){
-            console.log(this)
-            this.goDetails(this.sku)
-        },
-        search2(ev){
-            if(ev.keyCode == 13) {  //键盘回车的编码是13
-                this.search();
-            }
-        },
-        /** 
-         * @method 进入详情页
-         * @param productId 商品sku
-        */
-        goDetails(productId){
-            this.$router.push({
-                name: 'details',
-                query: {
-                    productId
-                }
-            })
-        },
-        /** 
-         * @method 点击相机回调
-        */
-        camera(){
-            let camera = document.getElementById('camera');
-            camera.click();
-        },
-        /** 
-         * @method 监听图片选择
-        */
-        changeFile(){
-            let camera = document.getElementById('camera');
-            let req = {
-                file: camera.files[0]
-            }
-            Indicator.open();
-            this.apis.upload(req).then((res)=>{
-                Indicator.close();
-                if(res.code == 200){
-                    this.list = res.data;
-                }else{
-                    this.list = [];
-                }
-            }).catch((err)=>{
-                Indicator.close();
-                console.log(err)
-            })
-        }
+  name: 'Home',
+  data(){
+    return{
+      popupVisible: false
     }
+  },
+  methods: {
+    /** 
+     * @method 打开语言切换弹窗
+    */
+    open(){
+      this.popupVisible = true;
+    },
+    /** 
+     * @method 切花语言
+     * @param {String} 语言编码
+    */
+    changeLanguage(code){
+      let that = this;
+      this.utils.setLanguage(code,(status)=>{
+        if(status){
+          that.popupVisible = false;
+        }
+      })
+    },
+    /** 
+     * @method 去搜索页
+    */
+    goSearch(){
+      sessionStorage.setItem("open",'')
+      this.$router.push({
+        name: 'list'
+      })
+    }
+  }
 }
 </script>
 <style lang="scss" scoped>
 #home-page{
-    height:100%;
+  height: 100%;
+  background: #FFF;
+  overflow: hidden;
+  .top{
+    margin-top: 0.50rem;
+    height: 0.42rem;
+    line-height: 0.42rem;
     display: flex;
-    flex-direction: column;
-    .search{
-        box-sizing:border-box;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        margin: 0.2rem 0.24rem 0.5rem;
-        height: 0.8rem;
-        padding: 0 0.3rem;
-        overflow: hidden;
-        border-radius: 0.4rem;
-        background:rgba(247,247,247,1);
-        .search-icon{
-            width: 0.3rem;
-            height: 0.3rem;
-            margin-right: 0.2rem;
-        }
-        form{
-            flex:1;
-            height: 0.37rem;
-            margin-right: 0.2rem;
-            input{
-                width: 100%;
-                font-size: 0.26rem;
-                height: 0.37rem;
-                line-height: 0.37rem;
-                background:rgba(247,247,247,1);
-                border:0;
-            }
-        }
-        .search-camera{
-            height: 0.34rem;
-            height: 0.3rem;
-        }
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    img:first-child{
+      height:100%;
+      margin-right: 0.15rem;
     }
-    .box{
+    img:last-child{
+      height: 0.24rem;
+      margin: 0 0.37rem 0 0.3rem;
+    }
+  }
+  .logo-box{
+    margin: 2rem auto 0.4rem;
+    display: block;
+    width: 3.7rem;
+    height:2.72rem;
+    .logo{
+      width: 100%;
+      height: auto;
+      max-height: 1.6rem;
+    }
+  }
+  .logo{
+    margin: 2rem auto 0;
+    display: block;
+    width: 3.7rem;
+    height: 1.12rem;
+  }
+  .home-text{
+    margin: 0.5rem 0.31rem 1.2rem;
+    color: #999999;
+    font-size: 0.34rem;
+    line-height: 0.48rem;
+  }
+  .button{
+    width: 5.78rem;
+    height: 1rem;
+    border-radius: 0.5rem;
+    background: #009530;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: #FFF;
+    font-size: 0.34rem;
+    img{
+      width: 0.48rem;
+      height: 0.44rem;
+      margin-right: 0.31rem;
+    }
+  }
+  .mint-popup{
+    width: 100%;
+    .language-list{
+      max-height: 4rem;
+      overflow-y: auto;
+      p{
         box-sizing: border-box;
-        padding-top: 0.1rem 0 0;
-        position: relative;
-        flex: 1;
-        overflow-y: auto;
-        .item{
-            box-sizing: border-box;
-            margin: 0.3rem 0.24rem 0;
-            height: 3rem;
-            padding: 0.2rem;
-            border-radius: 0.18rem;
-            overflow: hidden;
-            box-shadow:0.01rem 0 0.17rem 0.03rem rgba(61,205,88,0.1);
-            p{
-                width:100%;
-                font-size: 0.28rem;
-            }
-            .brand{
-                // font-size: 0.34rem;
-                font-weight: 600;
-            }
-            .productId{
-                line-height: 0.30rem;
-                // font-size: 0.22rem;
-                margin-top:0.12rem;
-            }
-            .category,.family{
-                line-height: 0.36rem;
-                // font-size: 0.28rem;
-                margin-top:0.04rem;
-            }
-            .description{
-                margin-top:0.12rem;
-                // font-size: 0.26rem;
-                line-height: 0.36rem;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;/*超出3行部分显示省略号，去掉该属性 显示全部*/
-                -webkit-box-orient: vertical;
-            }
-        }
-        .no-data{
-            text-align: center;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%,)
-        }
+        height: 1rem;
+        line-height: 1rem;
+        font-size: 0.38rem;
+        text-align: center;
+      }
+      .active{
+        background: #009530;
+        color: #FFF;
+      }
     }
-    #camera{
-        display: none;
-    }
+  }
 }
 </style>

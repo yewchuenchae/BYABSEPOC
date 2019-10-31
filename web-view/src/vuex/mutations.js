@@ -5,6 +5,6 @@ export default {
     },
     // 设置语言
     SET_LANGUAGE(state, val){
-        status.language = val;
+        state.language = val;
     }
 }
