@@ -155,7 +155,8 @@ public class ProductManager {
         imageSearchLogPO.setCreated(new Date());
         imageSearchLogPO.setCountry(country);
         imageSearchLogPO.setImageSearchResult(searchImageResponse);
-        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
+        // todo
+//        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }
 
 
@@ -193,35 +194,26 @@ public class ProductManager {
                             }
                         }
                     }
-                    // 查询出来的ocr结果逐一去数据库中description字段模糊 知道查询到数据
-                    productSkuPOs = fuzzySearch(productSkuPOs, text);
+                    // 查询出来的ocr结果逐一去数据库中description字段模糊 直到查询到数据
+//                    productSkuPOs = fuzzySearch(productSkuPOs, text);
 
                     // ocr 结果未查到
                     if (CollectionUtils.isEmpty(productSkuPOs)){
-                        productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
+                        List<ProductVO> productVOS1 = imageSearchOcrFilter(auctions, text, language);
+                        productVOS.addAll(productVOS1);
+                        productVOS = removeDuplicateContain(productVOS);
                     }else {
                         int size = productSkuPOs.size();
                         OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
-                        // 返回5条ocr查询的数据
-                        if (size >= IMAGE_SEARCH_RESULT_LIMIT){
-                            for (int i = 0; i < IMAGE_SEARCH_RESULT_LIMIT; i++) {
-                                ProductSkuPO productSkuPO = productSkuPOs.get(i);
-                                ProductVO productVO = new ProductVO();
-                                init(productVO,productSkuPO,language,ossClient);
-                                productVOS.add(productVO);
-                            }
-                            //   图搜结果 + ocr结果
-                        }else {
                             for (int i = 0; i < size; i++) {
                                 ProductSkuPO productSkuPO = productSkuPOs.get(i);
                                 ProductVO productVO = new ProductVO();
                                 init(productVO,productSkuPO,language,ossClient);
                                 productVOS.add(productVO);
                             }
-                            List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size, language);
+                            List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size , language);
                             productVOS.addAll(vos);
                             productVOS = removeDuplicateContain(productVOS);
-                        }
                     }
                 }else {
                     productVOS = productVOList(auctions, productVOS,IMAGE_SEARCH_RESULT_LIMIT,language);
@@ -286,6 +278,80 @@ public class ProductManager {
         }
         return productSkuPOs;
     }
+
+    /**
+     * 图搜库从description中过滤ocr
+     * @param auctions
+     * @param text
+     * @param language
+     * @return
+     */
+    private  List<ProductVO>  imageSearchOcrFilter(List<SearchImageResponse.Auction> auctions,List<String> text,String language){
+        OSSClient ossClient = aliyunOSSClientUtil.getOSSClient();
+
+        List<ProductVO> productVOS = new ArrayList<>();
+        for (SearchImageResponse.Auction auction: auctions) {
+            String customContent = auction.getCustomContent();
+            ProductVO productVO = JSON.parseObject(customContent, ProductVO.class);
+            productVO.setProductId(auction.getProductId());
+            productVO.setDescriptionOcr(productVO.getDescription().replaceAll(" ",""));
+            String url = aliyunOSSClientUtil.getUrlByFileKey(ossClient, productVO.getKey());
+            productVO.setUrl(url);
+            if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+                String description = doSpecialDescription(productVO.getBrand(), productVO.getFamily(),
+                        productVO.getCategory(), productVO.getDescription());
+                productVO.setDescription(description);
+
+            }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+                productVO.setBrand(productVO.getBrandChinese());
+                productVO.setCategory(productVO.getCategoryChinese());
+                String description = doSpecialDescription(productVO.getBrandChinese(), productVO.getFamilyChinese(),
+                        productVO.getCategoryChinese(), productVO.getDescriptionChinese());
+                productVO.setDescription(description);
+                productVO.setFamily(productVO.getFamilyChinese());
+            }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+                productVO.setBrand(productVO.getBrandPortuguese());
+                productVO.setCategory(productVO.getCategoryPortuguese());
+                String description = doSpecialDescription(productVO.getBrandPortuguese(), productVO.getFamilyPortuguese(),
+                        productVO.getCategoryPortuguese(), productVO.getDescriptionPortuguese());
+                productVO.setFamily(productVO.getFamilyPortuguese());
+                productVO.setDescription(description);
+            }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+                productVO.setBrand(productVO.getBrandRussian());
+                productVO.setCategory(productVO.getCategoryRussian());
+                String description = doSpecialDescription(productVO.getBrandRussian(), productVO.getFamilyRussian(),
+                        productVO.getCategoryRussian(), productVO.getDescriptionRussian());
+                productVO.setFamily(productVO.getFamilyRussian());
+                productVO.setDescription(description);
+            }
+            productVOS.add(productVO);
+        }
+        for (int i = 0; i < text.size(); i++) {
+            String ocr = text.get(i);
+            // 超过三个字符的进行过滤
+            if (ocr.length() >= 3){
+                List<ProductVO> collect = productVOS.stream().filter(item -> item.getDescriptionOcr().contains(ocr)).collect(toList());
+                if (!CollectionUtils.isEmpty(collect)){
+                    productVOS = collect;
+                }
+            }
+        }
+
+        // 过滤后的结果集
+        int size = productVOS.size();
+        // 过滤无结果
+        if (size == 50){
+            return productVOList(auctions, productVOS, 5, language);
+        }
+        if (size < 5 && size >0 ){
+            List<ProductVO> productVOList = productVOList(auctions, productVOS, 5 - size, language);
+            productVOS.addAll(productVOList);
+        }else if (size > 5){
+            productVOS = productVOS.subList(0, 5);
+        }
+        return productVOS;
+    }
+
 
 
     /**
@@ -476,11 +542,23 @@ public class ProductManager {
         request.setCrop(true);
 
         // 选填，返回结果的数目。取值范围：1-100。默认值：10。
-        request.setNum(20);
+        request.setNum(50);
 
         SearchImageResponse response = null;
         try {
             response = client.getAcsResponse(request);
+            // todo 分数
+//            List<SearchImageResponse.Auction> auctions = response.getAuctions();
+//            Iterator<SearchImageResponse.Auction> it = auctions.iterator();
+//            while(it.hasNext()){
+//                SearchImageResponse.Auction next = it.next();
+//                String sortExprValues = next.getSortExprValues();
+//                String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
+//                double l = Double.parseDouble(substring);
+//                if (l < 15){
+//                    it.remove();
+//                }
+//            }
         } catch (ClientException e) {
             log.error("阿里云图像搜索接口调用失败,入参SearchImageRequest{}",JSON.toJSONString(request),e);
            throw new BizException(ResultCode.IMAGE_SEARCH_ERROR.getCode(),e.getErrCode());

@@ -164,6 +164,7 @@ public class NonSeMateUtil {
                     product1.setBrand(excelProduct.getBrand());
                     product1.setCategory(excelProduct.getCategory());
                     product1.setFamily(excelProduct.getFamily());
+                    product1.setDescription(excelProduct.getDescription());
                     String toJSONString = JSON.toJSONString(product1);
                     meta.setCust_content(toJSONString);
 

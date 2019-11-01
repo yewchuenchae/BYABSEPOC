@@ -40,6 +40,8 @@ public class ProductVO implements Serializable {
     private String key;
     /**url*/
     private String url;
+    /**ocr说明*/
+    private String descriptionOcr;
 
 
     @Override
