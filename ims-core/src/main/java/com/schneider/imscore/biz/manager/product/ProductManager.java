@@ -260,11 +260,14 @@ public class ProductManager {
             int number = 0;
             for (int i = 0; i < text.size(); i++) {
                 String str = text.get(i);
-                productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
-                if (!CollectionUtils.isEmpty(productSkuPOs)){
-                    flag = true;
-                    number = i;
-                    break;
+                if (str.length() > 2){
+                    // 通过ocr模糊查询
+                    productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
+                    if (!CollectionUtils.isEmpty(productSkuPOs) && productSkuPOs.size() < 500 && productSkuPOs.size()> 10){
+                        flag = true;
+                        number = i;
+                        break;
+                    }
                 }
             }
             // 以数据库查到的数据为基准，过滤含有ocr的结果
@@ -276,6 +279,9 @@ public class ProductManager {
                         productSkuPOs = collect;
                     }
                 }
+            }else {
+                // 模糊查询说明没有符合结果
+                return new ArrayList<>();
             }
         }
         return productSkuPOs;
@@ -470,7 +476,7 @@ public class ProductManager {
         request.setCrop(true);
 
         // 选填，返回结果的数目。取值范围：1-100。默认值：10。
-        request.setNum(5);
+        request.setNum(20);
 
         SearchImageResponse response = null;
         try {
@@ -602,7 +608,9 @@ public class ProductManager {
                                     for (Object ocrLocation:ocrLocations ) {
                                         // 识别出的信息
                                         String text = ((JSONObject) ocrLocation).getString("text");
-                                        ocrResults.add(text);
+                                        if (!StringUtils.isEmpty(text)){
+                                            ocrResults.add(text);
+                                        }
                                     }
                                 }
                             }
