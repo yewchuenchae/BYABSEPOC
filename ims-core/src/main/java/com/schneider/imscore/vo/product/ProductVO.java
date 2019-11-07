@@ -42,6 +42,8 @@ public class ProductVO implements Serializable {
     private String url;
     /**ocr说明*/
     private String descriptionOcr;
+    /**分数*/
+    private String score;
 
 
     @Override

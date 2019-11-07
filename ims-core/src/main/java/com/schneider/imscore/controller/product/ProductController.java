@@ -32,11 +32,11 @@ public class ProductController {
      * @return
      */
     @PostMapping("/product/search")
-    public Result listProductsBySearch(HttpServletRequest request,String language){
+    public Result listProductsBySearch(HttpServletRequest request,String language,String schneider){
         long currentTimeMillis = System.currentTimeMillis();
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
-        return productService.listProductsBySearch(file,language,request,currentTimeMillis);
+        return productService.listProductsBySearch(file,language,request,currentTimeMillis,schneider);
     }
 
     /**

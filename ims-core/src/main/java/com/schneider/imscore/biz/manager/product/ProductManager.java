@@ -18,6 +18,7 @@ import com.aliyuncs.imagesearch.model.v20190325.SearchImageRequest;
 import com.aliyuncs.imagesearch.model.v20190325.SearchImageResponse;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import com.schneider.imscore.constant.Constant;
 import com.schneider.imscore.enums.LanguageEnum;
 import com.schneider.imscore.mapper.product.ImageSearchAddMapper;
 import com.schneider.imscore.mapper.product.ImageSearchLogMapper;
@@ -43,11 +44,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import static com.schneider.imscore.constant.Constant.IMAGE_SEARCH_RESULT_LIMIT;
-import static com.schneider.imscore.constant.Constant.SUCCESS_CODE;
+
+import static com.schneider.imscore.constant.Constant.*;
 import static java.util.stream.Collectors.toList;
 
 
@@ -100,7 +102,7 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,Long ocrStart) throws BizException {
+    public List<ProductVO> listProductsBySearch(MultipartFile multipartFile, String language, HttpServletRequest request,Long ocrStart,String schneider) throws BizException {
         // 图片ocr
         List<String> text = imageOcr(multipartFile);
         long ocrEnd = System.currentTimeMillis();
@@ -119,10 +121,10 @@ public class ProductManager {
 
         long imageSearchStart = System.currentTimeMillis();
         // 图搜
-        SearchImageResponse response = imageSearch(multipartFile);
-        String searchImageResponse = JSON.toJSONString(response);
+        SearchImageResponse response = imageSearch(multipartFile,schneider);
 
         long imageSearchEnd = System.currentTimeMillis();
+        // 图搜时间
         int imageSearchTime = (int)(imageSearchEnd - imageSearchStart);
 
         // 图搜和ocr结果解析
@@ -131,9 +133,66 @@ public class ProductManager {
         // 接口整体调用时长
         long endTime = System.currentTimeMillis();
         int wholeTime = (int) (endTime - ocrStart);
+
+        // 避免图搜结果中CustomContent过长
+        List<SearchImageResponse.Auction> auctions = response.getAuctions();
+        for (SearchImageResponse.Auction auction: auctions) {
+            auction.setCustomContent(null);
+        }
+        String searchImageResponse = JSON.toJSONString(response);
         // 监控日志
         saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country,searchImageResponse);
+
         return  productVOS;
+    }
+
+    /**
+     * 返回匹配程度
+     * @param response
+     * @param productVOS
+     * @return
+     */
+    private List<String> getScore(SearchImageResponse response , List<ProductVO> productVOS){
+        List<String> stringList = new ArrayList<>();
+        BigDecimal bigDecimal  = new BigDecimal("0");
+        List<SearchImageResponse.Auction> auctions = response.getAuctions();
+        for (ProductVO productVO :productVOS) {
+            // ocr返回的为100
+            if (Constant.SCORE.equals(productVO.getScore())){
+                stringList.add(Constant.SCORE);
+            }
+            for (SearchImageResponse.Auction auction:auctions) {
+                if (auction.getProductId().equals(productVO.getProductId())){
+                    String score = auction.getSortExprValues();
+                    String substring = score.substring(0, score.indexOf(";"));
+                    // 分数不为科学技术法的累加
+                    if (!substring.contains("e")){
+                        BigDecimal bigDecimal1 = new BigDecimal(substring);
+                        bigDecimal = bigDecimal.add(bigDecimal1);
+                    }
+                    stringList.add(substring);
+                    break;
+                }
+            }
+        }
+
+        List<String> scores = new ArrayList<>();
+        for (String str:stringList) {
+            // ocr返回的结果
+            if (str.equals(Constant.SCORE)){
+                scores.add(Constant.SCORE);
+            }else {
+                // 分数为科学技术法
+                if (str.contains("e")){
+                    scores.add(Constant.SCORE);
+                }else {
+                    BigDecimal multiply = new BigDecimal(str).divide(bigDecimal,10,BigDecimal.ROUND_HALF_DOWN);
+                    String s = String.valueOf(multiply);
+                    scores.add(s);
+                }
+            }
+        }
+        return scores;
     }
 
     /**
@@ -154,9 +213,9 @@ public class ProductManager {
         imageSearchLogPO.setOcrResult(ocrResult);
         imageSearchLogPO.setCreated(new Date());
         imageSearchLogPO.setCountry(country);
+
         imageSearchLogPO.setImageSearchResult(searchImageResponse);
-        // todo
-//        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
+        imageSearchLogMapper.saveImageSearchLog(imageSearchLogPO);
     }
 
 
@@ -209,6 +268,8 @@ public class ProductManager {
                                 ProductSkuPO productSkuPO = productSkuPOs.get(i);
                                 ProductVO productVO = new ProductVO();
                                 init(productVO,productSkuPO,language,ossClient);
+                                // ocr匹配度为100%
+                                productVO.setScore("100");
                                 productVOS.add(productVO);
                             }
                             List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size , language);
@@ -522,7 +583,7 @@ public class ProductManager {
      * @return
      * @throws BizException
      */
-    private SearchImageResponse imageSearch(MultipartFile multipartFile) throws BizException{
+    private SearchImageResponse imageSearch(MultipartFile multipartFile,String schneider) throws BizException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
         IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
         IAcsClient client = new DefaultAcsClient(profile);
@@ -547,18 +608,34 @@ public class ProductManager {
         SearchImageResponse response = null;
         try {
             response = client.getAcsResponse(request);
-            // todo 分数
-//            List<SearchImageResponse.Auction> auctions = response.getAuctions();
-//            Iterator<SearchImageResponse.Auction> it = auctions.iterator();
-//            while(it.hasNext()){
-//                SearchImageResponse.Auction next = it.next();
-//                String sortExprValues = next.getSortExprValues();
-//                String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
-//                double l = Double.parseDouble(substring);
-//                if (l < 15){
-//                    it.remove();
-//                }
-//            }
+            List<SearchImageResponse.Auction> auctions = response.getAuctions();
+            Iterator<SearchImageResponse.Auction> it = auctions.iterator();
+            while(it.hasNext()){
+                SearchImageResponse.Auction next = it.next();
+                String sortExprValues = next.getSortExprValues();
+                String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
+                BigDecimal bigDecimal = new BigDecimal(substring);
+                // 过滤小于10分的
+                if (bigDecimal.compareTo(new BigDecimal("10")) == -1){
+                    it.remove();
+                }else {
+                    String customContent = next.getCustomContent();
+                    ProductVO productVO = JSON.parseObject(customContent, ProductVO.class);
+                    // 施耐德和非施耐德产品隔离
+
+                    // 施耐德产品
+                    if (SCHNEIDER.equals(schneider)){
+                        if (StringUtils.isEmpty(productVO.getKey())){
+                            it.remove();
+                        }
+                        // 非施耐德产品
+                    }else if (NON_SCHNEIDER.equals(schneider)){
+                        if (!StringUtils.isEmpty(productVO.getKey())){
+                            it.remove();
+                        }
+                    }
+                }
+            }
         } catch (ClientException e) {
             log.error("阿里云图像搜索接口调用失败,入参SearchImageRequest{}",JSON.toJSONString(request),e);
            throw new BizException(ResultCode.IMAGE_SEARCH_ERROR.getCode(),e.getErrCode());

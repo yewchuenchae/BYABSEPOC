@@ -46,4 +46,19 @@ public interface Constant {
      * highest file size(2MB)
      */
     public static final int  HIGHEST_FILE_SIZE = 2097152;
+
+    /**
+     * 匹配度100%
+     */
+    public static final String SCORE = "100";
+
+    /**
+     * 施耐德
+     */
+    public static final String SCHNEIDER = "1";
+
+    /**
+     * 非施耐德
+     */
+    public static final String NON_SCHNEIDER = "0";
 }
