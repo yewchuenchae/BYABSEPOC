@@ -143,6 +143,10 @@ public class ProductManager {
         // 监控日志
         saveImageSearchLog(ocrTime,imageSearchTime,ipAddress,jsonOcr,wholeTime,country,searchImageResponse);
 
+        // 没数据
+        if (CollectionUtils.isEmpty(productVOS)){
+            throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
+        }
         return  productVOS;
     }
 
@@ -269,7 +273,7 @@ public class ProductManager {
                                 ProductVO productVO = new ProductVO();
                                 init(productVO,productSkuPO,language,ossClient);
                                 // ocr匹配度为100%
-                                productVO.setScore("100");
+                                productVO.setScore(SCORE);
                                 productVOS.add(productVO);
                             }
                             List<ProductVO> vos = productVOList(auctions, productVOS, IMAGE_SEARCH_RESULT_LIMIT - size , language);
@@ -609,6 +613,7 @@ public class ProductManager {
         try {
             response = client.getAcsResponse(request);
             List<SearchImageResponse.Auction> auctions = response.getAuctions();
+            // todo
             Iterator<SearchImageResponse.Auction> it = auctions.iterator();
             while(it.hasNext()){
                 SearchImageResponse.Auction next = it.next();
@@ -616,7 +621,7 @@ public class ProductManager {
                 String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
                 BigDecimal bigDecimal = new BigDecimal(substring);
                 // 过滤小于10分的
-                if (bigDecimal.compareTo(new BigDecimal("10")) == -1){
+                if (bigDecimal.compareTo(new BigDecimal("5")) == -1){
                     it.remove();
                 }else {
                     String customContent = next.getCustomContent();
@@ -888,6 +893,14 @@ public class ProductManager {
                 init(productVO,productSkuPO,productReqData.getLanguage(),ossClient);
                 productVOS.add(productVO);
             }
+            if (StringUtils.isEmpty(skuPO.getOssKey())){
+                ProductVO productVO = productVOS.get(0);
+                productVO.setType("recommend");
+            }
+        }
+        // 没数据
+        if (CollectionUtils.isEmpty(productVOS)){
+            throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
         }
         return productVOS;
     }

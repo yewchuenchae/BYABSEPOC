@@ -20,6 +20,9 @@ public enum ResultCode {
      */
     FAILED("500", "FAILED"),
 
+    // 没有产品匹配
+    NO_MATCH_PRODUCTS("600","unable to find what your looking for"),
+
     // 未上传图片
     ILLEGAL_PARAM("300","Please upload pictures"),
     // 单张图片处理失败
