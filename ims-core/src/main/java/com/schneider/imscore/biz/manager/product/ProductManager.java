@@ -612,6 +612,7 @@ public class ProductManager {
         SearchImageResponse response = null;
         try {
             response = client.getAcsResponse(request);
+            log.info("response返回结果"+ JSON.toJSONString(response.getAuctions()));
             List<SearchImageResponse.Auction> auctions = response.getAuctions();
             // todo
             Iterator<SearchImageResponse.Auction> it = auctions.iterator();
@@ -621,7 +622,7 @@ public class ProductManager {
                 String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
                 BigDecimal bigDecimal = new BigDecimal(substring);
                 // 过滤小于10分的
-                if (bigDecimal.compareTo(new BigDecimal("5")) == -1){
+                if (bigDecimal.compareTo(new BigDecimal("3")) == -1){
                     it.remove();
                 }else {
                     String customContent = next.getCustomContent();
