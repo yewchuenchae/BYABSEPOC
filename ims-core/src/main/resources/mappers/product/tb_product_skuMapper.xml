@@ -109,6 +109,64 @@
         where reference = #{reference,jdbcType=VARCHAR}
     </update>
 
+    <update id="updatePT" parameterType="com.schneider.imscore.po.product.ProductSkuPO" >
+        update tb_product_sku
+        <set >
+        <if test="brand != null" >
+            brand = #{brand,jdbcType=VARCHAR},
+        </if>
+        <if test="brandChinese != null" >
+            brand_chinese = #{brandChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="brandPortuguese != null" >
+            brand_portuguese = #{brandPortuguese,jdbcType=VARCHAR},
+        </if>
+        <if test="brandRussian != null" >
+            brand_russian = #{brandRussian,jdbcType=VARCHAR},
+        </if>
+        <if test="family != null" >
+            family = #{family,jdbcType=VARCHAR},
+        </if>
+        <if test="familyChinese != null" >
+            family_chinese = #{familyChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="familyPortuguese != null" >
+            family_portuguese = #{familyPortuguese,jdbcType=VARCHAR},
+        </if>
+        <if test="familyRussian != null" >
+            family_russian = #{familyRussian,jdbcType=VARCHAR},
+        </if>
+        <if test="category != null" >
+            category = #{category,jdbcType=VARCHAR},
+        </if>
+        <if test="categoryChinese != null" >
+            category_chinese = #{categoryChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="categoryPortuguese != null" >
+            category_portuguese = #{categoryPortuguese,jdbcType=VARCHAR},
+        </if>
+        <if test="categoryRussian != null" >
+            category_russian = #{categoryRussian,jdbcType=VARCHAR},
+        </if>
+        <if test="description != null" >
+            description = #{description,jdbcType=VARCHAR},
+        </if>
+        <if test="descriptionChinese != null" >
+            description_chinese = #{descriptionChinese,jdbcType=VARCHAR},
+        </if>
+        <if test="descriptionPortuguese != null" >
+            description_portuguese = #{descriptionPortuguese,jdbcType=VARCHAR},
+        </if>
+        <if test="descriptionRussian != null" >
+            description_russian = #{descriptionRussian,jdbcType=VARCHAR},
+        </if>
+        <if test="ossKey != null" >
+            oss_key = #{ossKey,jdbcType=VARCHAR},
+        </if>
+        </set>
+        where reference = #{reference,jdbcType=VARCHAR}
+    </update>
+
     <select id="selectAllProducts" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />

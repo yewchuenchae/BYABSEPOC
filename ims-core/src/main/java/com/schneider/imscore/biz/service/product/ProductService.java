@@ -107,7 +107,9 @@ public class ProductService {
         List<ProductVO> productVOS = null;
         try {
             productVOS = productManager.searchProductBySkuOrCategory(productReqData);
-        }  catch (Exception e) {
+        } catch (BizException e){
+            return new Result(e.getCode(),e.getMessage());
+        } catch (Exception e) {
             log.error("产品模糊搜索失败",e);
             return new Result<>(ResultCode.FAILED.getCode(),ResultCode.FAILED.getDesc());
         }

@@ -33,5 +33,11 @@ public class ExcelProduct {
     @ExcelVOAttribute(name = "filePath", column = "Q")
     private String filePath;
 
+    /** filePath */
+    @ExcelVOAttribute(name = "descriptionPortuguese", column = "Z")
+    private String descriptionPortuguese;
 
+    /** filePath */
+    @ExcelVOAttribute(name = "B", column = "B")
+    private String B;
 }

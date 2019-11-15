@@ -22,6 +22,12 @@ public enum ResultCode {
 
     // 没有产品匹配
     NO_MATCH_PRODUCTS("600","unable to find what your looking for"),
+    // 没有产品匹配
+    NO_MATCH_PRODUCTS_CHINESE("601","抱歉，找不到你要的产品, 请重试."),
+    // 没有产品匹配
+    NO_MATCH_PRODUCTS_PORTUGUESE("602","Desculpe, não consigo encontrar o que você está procurando. Por favor tente novamente."),
+    // 没有产品匹配
+    NO_MATCH_PRODUCTS_RUSSIAN("603","Извините, не могу найти то, что вы ищете. пожалуйста, повторите."),
 
     // 未上传图片
     ILLEGAL_PARAM("300","Please upload pictures"),

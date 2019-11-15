@@ -56,6 +56,13 @@ public interface ProductSkuMapper {
     int update(ProductSkuPO productSkuPO);
 
     /**
+     * 更新
+     * @param productSkuPO
+     * @return
+     */
+    int updatePT(ProductSkuPO productSkuPO);
+
+    /**
      * 查询所有产品
      * @return
      */

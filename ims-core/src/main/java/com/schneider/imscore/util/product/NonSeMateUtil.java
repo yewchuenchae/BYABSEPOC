@@ -148,12 +148,25 @@ public class NonSeMateUtil {
         String mateFile = "";
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         MultipartFile file = multipartRequest.getFile("file");
+        MultipartFile file1 = multipartRequest.getFile("file1");
         try {
             String fileName = file.getOriginalFilename();
             InputStream is1 = file.getInputStream();
             ExcelUtil<ExcelProduct> excelUtil1 = new ExcelUtil<>(ExcelProduct.class);
             List<ExcelProduct> excelProducts = excelUtil1.importExcel(fileName, is1, 1);
-            for (ExcelProduct excelProduct: excelProducts) {
+
+
+            // 葡萄牙语
+            InputStream is11 = file1.getInputStream();
+            ExcelUtil<ExcelProduct> excelProductExcelUtil = new ExcelUtil<>(ExcelProduct.class);
+            List<ExcelProduct> excelProducts1 = excelProductExcelUtil.importExcel("Portuguese", is11, 1);
+
+
+            for (int i = 0; i < excelProducts.size(); i++) {
+                    ExcelProduct excelProduct = excelProducts.get(i);
+                ExcelProduct excelProduct1 = excelProducts1.get(i);
+
+
                 if (StringUtils.isNotBlank(excelProduct.getReference())){
                     Meta meta = new Meta();
                     meta.setItem_id(excelProduct.getReference());
@@ -162,17 +175,24 @@ public class NonSeMateUtil {
 
                     Product product1 = new Product();
                     product1.setBrand(excelProduct.getBrand());
+                    product1.setBrandPortuguese(excelProduct.getBrand());
+
                     product1.setCategory(excelProduct.getCategory());
+                    product1.setCategoryPortuguese("Inversor de frequência");
+
                     product1.setFamily(excelProduct.getFamily());
+                    product1.setFamilyPortuguese(excelProduct.getFamily());
+
                     product1.setDescription(excelProduct.getDescription());
+                    product1.setDescriptionPortuguese(excelProduct1.getDescriptionPortuguese());
                     String toJSONString = JSON.toJSONString(product1);
                     meta.setCust_content(toJSONString);
 
                     String filePathExcel = excelProduct.getFilePath();
                     List<String> readfile = readfile(filePath+ filePathExcel);
-                    for (int i = 0; i < readfile.size(); i++) {
+                    for (int j = 0; j < readfile.size(); j++) {
                         List<String> names = new ArrayList<>();
-                        names.add((filePathExcel.substring(1)+"\\"+readfile.get(i)).replace("\\","/"));
+                        names.add((filePathExcel.substring(1)+"\\"+readfile.get(j)).replace("\\","/"));
                         if (names.size() == 0){
                             meta.setPic_list(null);
                         }else {
@@ -221,5 +241,45 @@ public class NonSeMateUtil {
         return list;
     }
 
+
+    /**
+     * 非施耐德产品更新数据库
+     * @param request
+     */
+    @PostMapping("/util/updateImageSearchProduct")
+    public Result updateImageSearchProduct(HttpServletRequest request){
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        MultipartFile file = multipartRequest.getFile("file");
+        InputStream is = null;
+        String fileName = file.getOriginalFilename();
+        try {
+            is = file.getInputStream();
+            ExcelUtil<ExcelProduct> excelUtil1 = new ExcelUtil<>(ExcelProduct.class);
+            List<ExcelProduct> excelSkuMatchings = excelUtil1.importExcel("Portuguese", is, 1);
+            for (int i = 0; i < excelSkuMatchings.size(); i++) {
+                ExcelProduct excelSkuMatching = excelSkuMatchings.get(i);
+
+                if (excelSkuMatching.getBrand() == null){
+                    continue;
+                }
+
+                ProductSkuPO productSkuPO = new ProductSkuPO();
+                // A列 sku
+                productSkuPO.setReference(excelSkuMatching.getBrand());
+                // Z列
+                productSkuPO.setDescriptionPortuguese(excelSkuMatching.getDescriptionPortuguese());
+
+                productSkuPO.setBrandPortuguese(excelSkuMatching.getB());
+                // c列
+                productSkuPO.setFamilyPortuguese(excelSkuMatching.getReference());
+                System.out.println("11");
+//                productSkuMapper.insertSelective(productSkuPO);
+                productSkuMapper.updatePT(productSkuPO);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Result.buildSuccess();
+    }
 
 }

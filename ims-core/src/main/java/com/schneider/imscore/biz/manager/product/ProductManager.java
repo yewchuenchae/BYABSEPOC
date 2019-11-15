@@ -145,8 +145,19 @@ public class ProductManager {
 
         // 没数据
         if (CollectionUtils.isEmpty(productVOS)){
-            throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
+            if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
+            }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_CHINESE);
+            }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_PORTUGUESE);
+            }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_RUSSIAN);
+            }
+
         }
+
+        productVOS = removeDuplicateContain(productVOS);
         return  productVOS;
     }
 
@@ -899,9 +910,20 @@ public class ProductManager {
                 productVO.setType("recommend");
             }
         }
+
+        String language = productReqData.getLanguage();
         // 没数据
         if (CollectionUtils.isEmpty(productVOS)){
-            throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
+            if (StringUtils.isEmpty(language) || LanguageEnum.LANGUAGE_ENGLISH.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS);
+            }else if (LanguageEnum.LANGUAGE_CHINESE.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_CHINESE);
+            }else if (LanguageEnum.LANGUAGE_PORTUGUESE.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_PORTUGUESE);
+            }else if (LanguageEnum.LANGUAGE_RUSSIAN.getKey().equals(language)){
+                throw new BizException(ResultCode.NO_MATCH_PRODUCTS_RUSSIAN);
+            }
+
         }
         return productVOS;
     }
@@ -913,6 +935,7 @@ public class ProductManager {
      * @return
      */
     private List<ProductSkuPO> listsNonSeProduct(String sku,List<ProductSkuPO> productSkuPOS){
+        // 非施耐德产品
         List<SkuMatchingPO> skuMatchingPOS = skuMatchingMapper.selectMatchByCompetitorSku(sku);
         if (!CollectionUtils.isEmpty(skuMatchingPOS)){
             List<String> skuList = skuMatchingPOS.stream().map(SkuMatchingPO::getSchneiderElectricSku).collect(toList());
