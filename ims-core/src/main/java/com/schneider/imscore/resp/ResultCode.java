@@ -44,7 +44,9 @@ public enum ResultCode {
     // 新增图像搜索api调用失败
     IMAGE_SEARCH_ADD_ERROR("800","add image search  api error"),
 
-    UNSUPPORTED_PIC_PIXELS("801","The image search works best with photo that are at least 200*200px")
+    UNSUPPORTED_PIC_PIXELS("801","The image search works best with photo that are at least 200*200px"),
+
+    UNABLE_FIND("802","Unable to find a match")
     ;
 
 

@@ -655,7 +655,7 @@ public class ProductManager {
             }
         } catch (ClientException e) {
             log.error("阿里云图像搜索接口调用失败,入参SearchImageRequest{}",JSON.toJSONString(request),e);
-           throw new BizException(ResultCode.IMAGE_SEARCH_ERROR.getCode(),e.getErrCode());
+           throw new BizException(ResultCode.UNABLE_FIND);
         }
         return response;
     }
@@ -744,7 +744,7 @@ public class ProductManager {
             httpResponse = client.doAction(imageSyncScanRequest);
         } catch (ClientException e) {
             log.error("阿里云ocr调用失败 入参imageSyncScanRequest：{}",JSON.toJSONString(imageSyncScanRequest),e);
-            throw new BizException(ResultCode.OCR_ERROR);
+            throw new BizException(ResultCode.UNABLE_FIND);
         }
 
         //服务端接收到请求，并完成处理返回的结果
