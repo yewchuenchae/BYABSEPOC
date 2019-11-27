@@ -145,7 +145,7 @@ public class ImageSizeUtil {
             }
 
             return new Base64DecodedMultipartFile(b, baseStrs[0]);
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("图片压缩失败",e);
             return null;
         }
@@ -169,7 +169,8 @@ public class ImageSizeUtil {
                 InputStream inputStream = fileImg[0].getInputStream();
                 byte[] imgData = ImageSizeUtil.compressPicForScale(ToolsUtil.getByteArray(inputStream),imageLengthSize);
                 imgData1 = "data:"+fileImg[0].getContentType()+";base64,"+encoder.encode(imgData);
-                MultipartFile def = ImageSizeUtil.base64ToMultipart(imgData1);
+                MultipartFile def = ImageSizeUtil
+                        .base64ToMultipart(imgData1);
                 result[0] = def;
             } catch (IOException e) {
                 log.error("压缩图片出错",e);

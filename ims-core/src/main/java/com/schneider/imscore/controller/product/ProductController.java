@@ -2,6 +2,7 @@ package com.schneider.imscore.controller.product;
 
 import com.schneider.imscore.biz.service.product.ProductService;
 import com.schneider.imscore.resp.Result;
+import com.schneider.imscore.util.ImageSizeUtil;
 import com.schneider.imscore.vo.product.req.ProductReqData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,10 +33,21 @@ public class ProductController {
      * @return
      */
     @PostMapping("/product/search")
-    public Result listProductsBySearch(HttpServletRequest request,String language,String type){
+    public Result listProductsBySearch(MultipartFile file,String language,String type,HttpServletRequest request){
         long currentTimeMillis = System.currentTimeMillis();
-        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-        MultipartFile file = multipartRequest.getFile("file");
+        return productService.listProductsBySearch(file,language,request,currentTimeMillis,type);
+    }
+
+    /**
+     * 图搜
+     * @param request
+     * @param language
+     * @return
+     */
+    @PostMapping("/gateway/product/search")
+    public Result listProductsBySearchGateway(String base64File,String language,String type,HttpServletRequest request){
+        long currentTimeMillis = System.currentTimeMillis();
+        MultipartFile file = ImageSizeUtil.base64ToMultipart(base64File);
         return productService.listProductsBySearch(file,language,request,currentTimeMillis,type);
     }
 

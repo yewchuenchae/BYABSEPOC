@@ -1,5 +1,6 @@
 package com.schneider.imscore.vo.product;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,6 +10,7 @@ import java.io.Serializable;
  * @createDate 2019/08/22 10:11
  * @Description
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public class ProductVO implements Serializable {
 
