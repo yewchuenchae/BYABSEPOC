@@ -290,62 +290,6 @@ public class ProductManager {
     }
 
     /**
-     * ocr结果含有O替换成0
-     * @param text
-     * @return
-     */
-    private List<String> doSpecialOcr(List<String> text){
-        List<String> productIds = new ArrayList<>();
-        for (String str: text) {
-            if (str.contains("O")){
-                String o = str.replaceAll("O", "0");
-                productIds.add(o);
-            }
-        }
-        return productIds;
-    }
-
-
-    /**
-     * 查询出来的ocr结果逐一去数据库中description字段模糊查询 直到查询到数据
-     * @param productSkuPOs
-     * @param text
-     * @return
-     */
-    private List<ProductSkuPO> fuzzySearch(List<ProductSkuPO>  productSkuPOs,List<String> text){
-        if (CollectionUtils.isEmpty(productSkuPOs)){
-            boolean flag = false;
-            int number = 0;
-            for (int i = 0; i < text.size(); i++) {
-                String str = text.get(i);
-                if (str.length() > 2){
-                    // 通过ocr模糊查询
-                    productSkuPOs = productSkuMapper.selectProductLikeDescription(str);
-                    if (!CollectionUtils.isEmpty(productSkuPOs) && productSkuPOs.size() < 500 && productSkuPOs.size()> 10){
-                        flag = true;
-                        number = i;
-                        break;
-                    }
-                }
-            }
-            // 以数据库查到的数据为基准，过滤含有ocr的结果
-            if (flag){
-                for (int i = number +1; i < text.size(); i++) {
-                    String firstOcr = text.get(i);
-                    List<ProductSkuPO> collect = productSkuPOs.stream().filter(item -> item.getDescriptionOcr().contains(firstOcr)).collect(Collectors.toList());
-                    if (!CollectionUtils.isEmpty(collect)){
-                        productSkuPOs = collect;
-                    }
-                }
-            }else {
-                // 模糊查询说明没有符合结果
-                return new ArrayList<>();
-            }
-        }
-        return productSkuPOs;
-    }
-
-    /**
      * 图搜库从description中过滤ocr
      * @param auctions
      * @param text
@@ -660,7 +604,7 @@ public class ProductManager {
                 String sortExprValues = next.getSortExprValues();
                 String substring = sortExprValues.substring(0, sortExprValues.indexOf(";"));
                 BigDecimal bigDecimal = new BigDecimal(substring);
-                // 过滤小于10分的
+                // 过滤小于3分的
                 if (bigDecimal.compareTo(new BigDecimal("3")) == -1){
                     it.remove();
                 }else {
@@ -817,17 +761,17 @@ public class ProductManager {
                     } else {
                         //单张图片处理失败, 原因是具体的情况详细分析
                         log.error("ocr检测图片单张图片处理失败 task response:{}",JSON.toJSONString(taskResult));
-                        throw new BizException(ResultCode.SINGLE_IMAGE_CHECK_ERROR);
+                        throw new BizException(ResultCode.UNABLE_FIND);
                     }
                 }
             } else {
                 //表明请求整体处理失败，原因视具体的情况详细分析
                 log.error("ocr:the whole image scan request failed. response:{}",JSON.toJSONString(scrResponse));
-                throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
+                throw new BizException(ResultCode.UNABLE_FIND);
             }
         }else {
             log.error("ocr:the whole image scan request failed. httpResponse:{}",JSON.toJSONString(httpResponse));
-            throw new BizException(ResultCode.WHOLE_IMAGE_CHECK_ERROR);
+            throw new BizException(ResultCode.UNABLE_FIND);
         }
         return ocrResults;
     }
