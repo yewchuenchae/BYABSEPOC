@@ -61,4 +61,9 @@ public interface Constant {
      * 非施耐德
      */
     public static final String NON_SCHNEIDER = "0";
+
+    /**
+     * 加密key
+     */
+    public static final String KEY = "TUSOU";
 }

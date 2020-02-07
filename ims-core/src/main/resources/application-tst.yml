@@ -23,16 +23,16 @@ aliyun:
   image:
     endpoint: imagesearch.ap-southeast-1.aliyuncs.com
     region: ap-southeast-1
-    accessKeyId: LTAIFmaxnrb5uGYd
-    accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ
+    accessKeyId: C4DC59DA82CE17450F5B5847DFC4DAE1994A8164617B9EA516A8CF968DAF5D18
+    accessKeySecret: A74186EEA31CC0E2214C46891AA11314B7F1628AF78928BF10259276CD5D7F13
     instanceName: scimgsg1
   oss:
     bucketName: project-pixie
     endpoint: oss-ap-southeast-1.aliyuncs.com
-    accessKeyId: LTAIFmaxnrb5uGYd
-    accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ
+    accessKeyId: C4DC59DA82CE17450F5B5847DFC4DAE1994A8164617B9EA516A8CF968DAF5D18
+    accessKeySecret: A74186EEA31CC0E2214C46891AA11314B7F1628AF78928BF10259276CD5D7F13
   green:
     region: ap-southeast-1
     endpoint: green-vpc.ap-southeast-1.aliyuncs.com
-    accessKeyId: LTAIFmaxnrb5uGYd
-    accessKeySecret: ZqTBZ5hYapEpAY7gNsP5EMQbK6beVQ
+    accessKeyId: C4DC59DA82CE17450F5B5847DFC4DAE1994A8164617B9EA516A8CF968DAF5D18
+    accessKeySecret: A74186EEA31CC0E2214C46891AA11314B7F1628AF78928BF10259276CD5D7F13

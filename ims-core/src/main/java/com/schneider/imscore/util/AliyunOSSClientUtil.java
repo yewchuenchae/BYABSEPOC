@@ -6,6 +6,7 @@ package com.schneider.imscore.util;
 import com.aliyun.oss.HttpMethod;
 import com.aliyun.oss.OSSClient;
 import com.aliyun.oss.model.GeneratePresignedUrlRequest;
+import com.schneider.imscore.constant.Constant;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,7 +43,7 @@ public class AliyunOSSClientUtil {
      * @return
      */
     public  OSSClient getOSSClient() {
-        return new OSSClient(endPointOut, accessKeyId, accessKeySecret);
+        return new OSSClient(endPointOut, AESUtil.decrypt(accessKeyId, Constant.KEY), AESUtil.decrypt(accessKeySecret,Constant.KEY));
     }
 
     /**

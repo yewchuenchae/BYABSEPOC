@@ -574,7 +574,11 @@ public class ProductManager {
      */
     private SearchImageResponse imageSearch(MultipartFile multipartFile,String schneider) throws BizException{
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
-        IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
+
+        String key = AESUtil.decrypt(accessKeyId, KEY);
+        String secret = AESUtil.decrypt(accessKeySecret, KEY);
+
+        IClientProfile profile = DefaultProfile.getProfile(region, key, secret);
         IAcsClient client = new DefaultAcsClient(profile);
 
         SearchImageRequest request = new SearchImageRequest();
@@ -703,7 +707,10 @@ public class ProductManager {
      * @throws BizException
      */
     private List<String> imageOcr(MultipartFile multipartFile) throws BizException{
-        IClientProfile profiles = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
+        String key = AESUtil.decrypt(accessKeyId, KEY);
+        String secret = AESUtil.decrypt(accessKeySecret, KEY);
+
+        IClientProfile profiles = DefaultProfile.getProfile(region, key, secret);
         DefaultProfile.addEndpoint(region, "Green", greenEndpoint);
         IAcsClient client = new DefaultAcsClient(profiles);
 
@@ -786,7 +793,11 @@ public class ProductManager {
     @Transactional(rollbackFor = {Exception.class, BizException.class})
     public AddImageResponse saveImageSearch(ProductReqData productReqData,MultipartFile multipartFile)throws BizException {
         DefaultProfile.addEndpoint(region, "ImageSearch", endpoint);
-        IClientProfile profile = DefaultProfile.getProfile(region, accessKeyId, accessKeySecret);
+
+        String key = AESUtil.decrypt(accessKeyId, KEY);
+        String secret = AESUtil.decrypt(accessKeySecret, KEY);
+
+        IClientProfile profile = DefaultProfile.getProfile(region, key, secret);
         IAcsClient client = new DefaultAcsClient(profile);
 
         AddImageRequest request = new AddImageRequest();
